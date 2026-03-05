@@ -10,6 +10,7 @@ public abstract class Monster implements Comparable<Monster>{
 	private  boolean frozen;
 	private boolean shielded;
 	private  int confusionTurns;
+	
 	public  Monster(String name, String description, Role originalRole, int energy){
 		this.name = name;
 		this.description = description;
@@ -21,6 +22,7 @@ public abstract class Monster implements Comparable<Monster>{
 		this.shielded = false;
 		this.confusionTurns = 0;
 	}
+	
 	public Role getRole() {
 		return role;
 	}
