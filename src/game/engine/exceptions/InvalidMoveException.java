@@ -11,6 +11,6 @@ public class InvalidMoveException extends GameActionException {
         super(message);
     }
     public static String getMsg() {
-    return this.MSG;
+    return MSG;
     }
 }

@@ -1,3 +1,5 @@
+package game.engine.exceptions;
+
 public class OutOfEnergyException extends GameActionException {
     private static final String MSG = "Not Enough Energy for Power Up";
 
@@ -9,6 +11,6 @@ public class OutOfEnergyException extends GameActionException {
         super(message);
     }
     public static String getMsg() {
-        return this.MSG;
+        return MSG;
     }
 }
