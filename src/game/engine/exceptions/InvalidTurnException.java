@@ -11,6 +11,6 @@ public class InvalidTurnException extends GameActionException {
         super(message);
     }
     public static String getMsg() {
-        return MSG;
+        return this.MSG;
     }
 }
