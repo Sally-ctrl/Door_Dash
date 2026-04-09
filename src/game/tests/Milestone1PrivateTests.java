@@ -1157,7 +1157,7 @@ public class Milestone1PrivateTests {
 	public void testGameInstanceVariablePlayerIsPrivate() throws NoSuchFieldException, SecurityException, ClassNotFoundException {
 		testInstanceVariableIsPrivate(Class.forName(gamePath), "player");
 	}
-	// READ ONLY: board, allMonsters, player, opponent â€” getter logic + setter absent
+	// READ ONLY: board, allMonsters, player, opponent — getter logic + setter absent
 		@Test(timeout = 1000)
 		public void testGameBoardSetterAbsent() throws SecurityException, ClassNotFoundException {
 			testSetterAbsent("board", new String[] { gamePath });

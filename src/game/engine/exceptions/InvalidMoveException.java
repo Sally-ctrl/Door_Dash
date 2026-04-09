@@ -1,16 +1,16 @@
 package game.engine.exceptions;
 
-public class InvalidMoveException extends GameActionException {
-    private static final String MSG = "Invalid move attempted";
+@SuppressWarnings("serial")
+public class InvalidMoveException extends GameActionException{
+	private static final String MSG = "Invalid move attempted";
 
-    public InvalidMoveException() {
-        super(MSG);
-    }
+	public InvalidMoveException() {
+		super(MSG);
+	}
 
-    public InvalidMoveException(String message) {
-        super(message);
-    }
-    public static String getMsg() {
-    return MSG;
-    }
+	public InvalidMoveException(String message){
+		super(message);
+	}
+
 }
+
