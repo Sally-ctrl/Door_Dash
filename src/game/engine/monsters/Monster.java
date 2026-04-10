@@ -91,5 +91,15 @@ public abstract class Monster implements Comparable<Monster> {
 	public int compareTo(Monster other) {
 		return this.position - other.position;
 	}
+	
+	public final void alterEnergy(int energy){
+		if( shielded && energy<0){
+			shielded= false;
+			return;
+		}
+		setEnergy(this.energy+energy);
+		
+	}
+
 
 }
