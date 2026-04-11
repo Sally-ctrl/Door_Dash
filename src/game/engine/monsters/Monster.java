@@ -100,6 +100,16 @@ public abstract class Monster implements Comparable<Monster> {
 		setEnergy(this.energy+energy);
 		
 	}
+	public boolean isConfused(){
+		return this.confusionTurns >0;
+	}
+	public void decrementConfusion(){
+		if(this.confusionTurns>0)
+			this.confusionTurns--;
+		if(this.confusionTurns==0){
+			this.role = this.originalRole;
+		}
+	}
 
 	
 
