@@ -111,7 +111,13 @@ public abstract class Monster implements Comparable<Monster> {
 		}
 	}
 
-	
-
+	public void move(int distance){
+		int value= this.getPosition() + distance;
+		if(value<=0){
+			value = 0;
+		}
+		this.setPosition(value);
+	}
+    public  abstract void executePowerupEffect(Monster opponentMonster);
 
 }
