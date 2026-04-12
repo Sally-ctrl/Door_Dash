@@ -18,7 +18,7 @@ public class Schemer extends Monster {
 		if (target.getEnergy()<amount){
 			amount = target.getEnergy();
 		}
-
+        /*target.setEnergy(target.getEnergy() - amount);*/
 		return amount ;
 	}
 	public void executePowerupEffect(Monster opponentMonster) {
@@ -31,14 +31,15 @@ public class Schemer extends Monster {
 				Monster target = team.get(i);
 				if(target != opponentMonster){
 					int stolenFromTeammate = stealEnergyfrom(target);
-					// schemer ignores shield so cannot use alterenergy
-					target.setEnergy(target.getEnergy() - stolenFromTeammate);
-					totalStolen += stolenFromTeammate;
+					/*  schemer ignores shield so cannot use alterenergy
+					 this will be unneeded if stealEnergyfrom already reduces the energy of the opponent and teammates
+					target.setEnergy(target.getEnergy() - stolenFromTeammate);*/
+				    totalStolen += stolenFromTeammate;
 				}
 			}
 
-			this.alterEnergy(totalStolen);
-			/*opponentMonster.alterEnergy(-stolenFromOpponent);
+			this.setEnergy(this.getEnergy() + totalStolen);// not alterenegy because schemer ignores shield
+			
 		}
 		
 
