@@ -31,11 +31,20 @@ public class Schemer extends Monster {
 				Monster target = team.get(i);
 				if(target != opponentMonster){
 					int stolenFromTeammate = stealEnergyfrom(target);
+					// schemer ignores shield so cannot use alterenergy
+					target.setEnergy(target.getEnergy() - stolenFromTeammate);
 					totalStolen += stolenFromTeammate;
 				}
 			}
 			this.alterEnergy(totalStolen);	
 	}
+
+	@Override
+	public void setEnergy(int energy) {
+    	int current = getEnergy();
+    	int delta = energy - current;
+    	super.setEnergy(current + (delta + Constants.SCHEMER_STEAL));
+}
 }	
 	
 
