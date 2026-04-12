@@ -1,5 +1,6 @@
 package game.engine.monsters;
 
+import game.engine.Constants;
 import game.engine.Role;
 
 public class Schemer extends Monster {
@@ -8,4 +9,15 @@ public class Schemer extends Monster {
 		super(name, description, role, energy);
 	}
 	
+
+	private int stealEnergyfrom(Monster target){
+		int amount = Constants.SCHEMER_STEAL;
+
+		if (target.getEnergy()<amount){
+			amount = target.getEnergy();
+		}
+
+		return amount ;
+	}
 }
+
