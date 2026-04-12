@@ -28,13 +28,17 @@ public class Schemer extends Monster {
 			ArrayList<Monster> team= getStationedMonsters();
 			for(int i=0; i<team.size(); i++){
 				Monster target = team.get(i);
-				if(target != opponentMonster)
+				if(target != opponentMonster){
 					int stolenFromTeammate = stealEnergyfrom(target);
 					totalStolen += stolenFromTeammate;
 				}
-			this.alterEnergy(totalStolen);	
+			}
+			this.alterEnergy(totalStolen);
+			/*opponentMonster.alterEnergy(-stolenFromOpponent);
 		}
 		
+
+
 	}
 	
 	
