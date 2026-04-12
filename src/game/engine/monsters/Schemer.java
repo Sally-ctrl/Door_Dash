@@ -1,5 +1,6 @@
 package game.engine.monsters;
 
+import game.engine.Board;
 import game.engine.Constants;
 import game.engine.Role;
 import java.util.ArrayList;
@@ -25,18 +26,17 @@ public class Schemer extends Monster {
 			int totalStolen = 0;
 			int stolenFromOpponent = stealEnergyfrom(opponentMonster);
 			totalStolen += stolenFromOpponent;
-			ArrayList<Monster> team= getStationedMonsters();
+			ArrayList<Monster> team= Board.getStationedMonsters();
 			for(int i=0; i<team.size(); i++){
 				Monster target = team.get(i);
-				if(target != opponentMonster)
+				if(target != opponentMonster){
 					int stolenFromTeammate = stealEnergyfrom(target);
 					totalStolen += stolenFromTeammate;
 				}
+			}
 			this.alterEnergy(totalStolen);	
-		}
-		
 	}
-	
+}	
 	
 
 

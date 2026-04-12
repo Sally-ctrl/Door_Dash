@@ -12,44 +12,6 @@ import game.engine.cells.*;
 import game.engine.monsters.*;
 
 public class DataLoader {
-<<<<<<< HEAD
- public static final String CARDS_FILE_NAME ="cards.csv";
- public static final  String CELLS_FILE_NAME="cells.csv";
- public static final  String MONSTERS_FILE_NAME="monsters.csv";
-  
- public static ArrayList<Card> readCards() throws IOException{
-	ArrayList<Card> cards= new ArrayList<>();
-    try(BufferedReader br= new BufferedReader(new FileReader(CARDS_FILE_NAME))){
-    	String line;
-    	while((line=br.readLine())!=null){
-    		String[] values= line.split(",");
-    		 String type = values[0].trim().toUpperCase();       
-             String name = values[1].trim();
-             String description = values[2].trim();
-             int rarity = Integer.parseInt(values[3].trim());
-             Card current;
-             switch(type){
-             case "SWAPPER":
-                 current = new SwapperCard(name, description, rarity);
-                 break;
-             case "SHIELD":
-                 current = new ShieldCard(name, description, rarity);
-                 break;
-             case "ENERGYSTEAL":
-                 int energy = Integer.parseInt(values[4].trim());
-                 current = new EnergyStealCard(name, description, rarity, energy);
-                 break;
-             case "STARTOVER":
-                 boolean lucky = Boolean.parseBoolean(values[4].trim());
-                 current = new StartOverCard(name, description, rarity, lucky);
-                 break;
-             case "CONFUSION":
-                 int duration = Integer.parseInt(values[4].trim());
-                 current = new ConfusionCard(name, description, rarity, duration);
-                 break;
-             default:
-                 throw new IllegalArgumentException("Invalid card type " + type);
-=======
 	private static final String CARDS_FILE_NAME = "cards.csv";
 	private static final String CELLS_FILE_NAME = "cells.csv";
 	private static final String MONSTERS_FILE_NAME = "monsters.csv";
@@ -57,7 +19,6 @@ public class DataLoader {
 	@SuppressWarnings("resource")
 	public static ArrayList<Card> readCards() throws IOException {
 		ArrayList<Card> cards = new ArrayList<Card>();
->>>>>>> 896bd770a997025971b37608592eeabc44f3c9ec
 
 		BufferedReader br = new BufferedReader(new FileReader(CARDS_FILE_NAME));
 

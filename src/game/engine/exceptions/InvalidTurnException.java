@@ -8,18 +8,8 @@ public class InvalidTurnException extends GameActionException{
 		super(MSG);
 	}
 
-<<<<<<< HEAD
-    public InvalidTurnException(String message) {
-        super(message);
-    }
-    public static String getMsg() {
-        return this.MSG;
-    }
-}
-=======
 	public InvalidTurnException(String message){
 		super(message);
 	}
 
 }
->>>>>>> 896bd770a997025971b37608592eeabc44f3c9ec
