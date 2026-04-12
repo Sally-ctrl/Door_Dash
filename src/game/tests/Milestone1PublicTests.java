@@ -2886,7 +2886,7 @@ public class Milestone1PublicTests {
 		testSetterAbsent("opponent", new String[] { gamePath });
 	}
 
-	// Getter logic and setter logic for Game (requires Game instance â€” use DataLoader CSVs)
+	// Getter logic and setter logic for Game (requires Game instance — use DataLoader CSVs)
 
 
 	@Test(timeout = 1000)
