@@ -14,4 +14,6 @@ public class MonsterCell extends Cell {
 		return cellMonster;
 	}
 
+	
+
 }
