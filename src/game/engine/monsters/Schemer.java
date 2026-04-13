@@ -18,7 +18,7 @@ public class Schemer extends Monster {
 		if (target.getEnergy()<amount){
 			amount = target.getEnergy();
 		}
-        /*target.setEnergy(target.getEnergy() - amount);*/
+        target.setEnergy(target.getEnergy() - amount);
 		return amount ;
 	}
 	public void executePowerupEffect(Monster opponentMonster) {
@@ -41,13 +41,6 @@ public class Schemer extends Monster {
 			this.setEnergy(this.getEnergy() + totalStolen);// not alterenegy because schemer ignores shield
 			
 		}
-		
-
-
-=======
-			
-
-	}
 
 	@Override
 	public void setEnergy(int energy) {
