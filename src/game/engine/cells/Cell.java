@@ -23,4 +23,8 @@ public class Cell {
 		this.monster = monster;
 	}
 
+	public void onLand(Monster landingMonster,Monster opponetMonster){
+		
+	}
+
 }
