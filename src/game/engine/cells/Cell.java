@@ -26,5 +26,10 @@ public class Cell {
 	public void onLand(Monster landingMonster,Monster opponetMonster){
 		
 	}
-
+	public boolean isOccupied(){
+		if(this.monster==null)
+			return false;
+		else
+			return true;
+	}
 }
