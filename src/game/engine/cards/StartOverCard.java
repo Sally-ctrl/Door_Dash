@@ -15,6 +15,6 @@ public class StartOverCard extends Card {
 			opponent.setPosition(0);
 		}
 	}
-	
 
+	
 }

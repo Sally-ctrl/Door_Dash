@@ -54,11 +54,24 @@ public class DoorCell extends Cell implements CanisterModifier {
 		if (!team.contains(monster)) {
         	team.add(monster);
     	}
+		boolean gainedorLost = false;
 		for(int i =0;i<team.size();i++){
-			team.get(i).alterEnergy(effect);
+			if(!team.get(i).isShielded()){
+				team.get(i).alterEnergy(effect);
+				gainedorLost = true;
+			}
 		}
-		if(team.size() !=0 && effect !=0)
-			this.setActivated(true);
+		if(gainedorLost){
+			this.activated = true;
+		}
 	
 	}
+
+   public void onLand(Monster landingMonster,Monster opponetMonster){
+     this.modifyCanisterEnergy(landingMonster, this.energy);
+
+
+   }
+
+	
 }

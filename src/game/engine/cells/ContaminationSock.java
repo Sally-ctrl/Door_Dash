@@ -8,7 +8,7 @@ public class ContaminationSock extends TransportCell implements CanisterModifier
 		super(name,-Math.abs(effect));
 	}
 	public void onLand(Monster landingMonster,Monster opponetMonster){
-		int canVal =  Constants.SLIP_PENALTY;
+		int canVal = -Math.abs(Constants.SLIP_PENALTY); // this should be negative as it is a penalty so -Math.abs(Constants.SLIP_PENALTY)
 		this.transport(landingMonster);
 		this.modifyCanisterEnergy(landingMonster,canVal);
 	}
@@ -18,7 +18,8 @@ public class ContaminationSock extends TransportCell implements CanisterModifier
 		//by using 2.3.1 onLand method 
 	}
 	public void transport(Monster monster){
-		int temp = this.getEffect()*-1; //i still want to check whether i will multiply by -1 or not bc in the constructor we already did 
+		int temp = this.getEffect(); //i still want to check whether i will multiply by -1 or not bc in the constructor we already did ,Salma:it is already negative in the class
 		monster.move(temp);
 	}
+	
 }

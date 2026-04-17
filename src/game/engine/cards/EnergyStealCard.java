@@ -29,8 +29,9 @@ public class EnergyStealCard extends Card implements CanisterModifier {
 
 		if (amountToSteal <= 0) return;
 
-		opponent.alterEnergy(-amountToSteal);
-		player.alterEnergy(amountToSteal);
+		
+		modifyCanisterEnergy(opponent, -amountToSteal);
+		modifyCanisterEnergy(player, amountToSteal);  
 		/*modifyCanisterEnergy(opponent, -100);
 			modifyCanisterEnergy(player, +100);
  			Bug:
