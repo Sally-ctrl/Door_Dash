@@ -109,6 +109,7 @@ public abstract class Monster implements Comparable<Monster> {
 		if(this.confusionTurns==0){
 			this.role = this.originalRole;
 		}
+		
 	}
 
 	public void move(int distance){
