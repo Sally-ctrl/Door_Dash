@@ -84,7 +84,11 @@ public abstract class Monster implements Comparable<Monster> {
 	}
 	
 	public void setConfusionTurns(int confusionTurns) {
+		if (confusionTurns<0)
+			this.confusionTurns =0;
+		else{
 		this.confusionTurns = confusionTurns;
+		} 
 	}
 
 	@Override
