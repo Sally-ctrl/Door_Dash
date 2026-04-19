@@ -1,6 +1,5 @@
 package game.engine.cards;
 
-import game.engine.Role;
 import game.engine.monsters.Monster;
 
 public class SwapperCard extends Card {

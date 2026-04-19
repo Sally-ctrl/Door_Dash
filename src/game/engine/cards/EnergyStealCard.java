@@ -32,11 +32,7 @@ public class EnergyStealCard extends Card implements CanisterModifier {
 		
 		modifyCanisterEnergy(opponent, -amountToSteal);
 		modifyCanisterEnergy(player, amountToSteal);  
-		/*modifyCanisterEnergy(opponent, -100);
-			modifyCanisterEnergy(player, +100);
- 			Bug:
-		opponent shield might block its own negative effect
-		BUT player still gains energy */
+		
 		
 	}
 
