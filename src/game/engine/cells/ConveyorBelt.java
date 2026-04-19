@@ -8,7 +8,5 @@ public class ConveyorBelt extends TransportCell {
 		super(name, effect);
 	}
 	//note i didnt override transport here bc tasks wants it to call with the positive value of effect which the parent already does
-	public void onLand(Monster landingMonster, Monster opponentMonster) {
-		this.transport(landingMonster);
-	}
+	
 }
