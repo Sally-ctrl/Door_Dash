@@ -56,14 +56,15 @@ public class DoorCell extends Cell implements CanisterModifier {
     	}
 		boolean consumed = false;
 		for(int i =0;i<team.size();i++){
-			boolean before = team.get(i).isShielded();
+			//boolean before = team.get(i).isShielded();
+			int before = team.get(i).getEnergy();
 			team.get(i).alterEnergy(effect);
-			boolean after = team.get(i).isShielded();
+			//boolean after = team.get(i).isShielded();
+			int after = team.get(i).getEnergy();
 			if (before !=after )
 				consumed= true;
-			//gainedorLost = true;
 		}
-		if(!consumed){
+		if(consumed){
 			this.activated = true;
 		}
 	
