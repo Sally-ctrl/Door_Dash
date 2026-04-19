@@ -33,7 +33,7 @@ public void setEnergy(int energy) {
 		super.move(distance);
 		}
 		else{
-			super.move(distance/2);
+		super.move(distance/2); 
 		}
 
 	}
