@@ -19,10 +19,7 @@ public class Dynamo extends Monster {
 		super.setEnergy(current+ delta*2);
 	}
 
-    @Override
-	public void move(int distance){
-		super.move(distance*2);
-	}
+    
 
 		
 }
