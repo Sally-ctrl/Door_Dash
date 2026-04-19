@@ -19,7 +19,7 @@ public class Dynamo extends Monster {
 		super.setEnergy(current+ delta*2);
 	}
 
-
+    
 
 		
 }

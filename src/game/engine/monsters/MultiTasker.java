@@ -27,4 +27,14 @@ public void setEnergy(int energy) {
     int delta = energy - current;
     super.setEnergy(current + (delta + Constants.MULTITASKER_BONUS));
 }
+@Override
+	public void move(int distance){
+		if(distance==1){
+		super.move(distance);
+		}
+		else{
+			super.move(distance/2);
+		}
+
+	}
 }
