@@ -9,10 +9,10 @@ public class StartOverCard extends Card {
 	}
 	public void performAction(Monster player, Monster opponent){
 		if(this.isLucky()){
-			player.setPosition(0);
+			opponent.setPosition(0);
 		}
 		else{
-			opponent.setPosition(0);
+			player.setPosition(0);
 		}
 	}
 
