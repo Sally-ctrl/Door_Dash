@@ -14,10 +14,12 @@ public class MonsterCell extends Cell {
 		return cellMonster;
 	}
 
-	public void onLand(Monster landingMonster,Monster opponetMonster){
-		
+	public void onLand(Monster landingMonster,Monster opponentMonster){
+		super.onLand(landingMonster,opponentMonster);
 		if(landingMonster.getRole() == cellMonster.getRole() ){
-			landingMonster.executePowerupEffect(cellMonster);
+			//landingMonster.executePowerupEffect(cellMonster);
+			landingMonster.executePowerupEffect(opponentMonster);
+
 			return;
 		}
 		

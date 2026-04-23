@@ -84,37 +84,16 @@ public class Board {
 	 }
 	 public void initializeBoard(ArrayList<Cell> specialCells){
 		 ArrayList<TransportCell> transportArray = getTransportCells(specialCells);
-		 try {
-				Board.setStationedMonsters(DataLoader.readMonsters());
-             	
-    		} catch (IOException e) {
-        	e.printStackTrace();
-    		}
-    	Board.setStationedMonsters(stationedMonsters);
 		 ArrayList<DoorCell> doorArray = getDoorCells(specialCells);
 		 int j =0;
-		 ArrayList<Integer> specialIndex = new ArrayList<>();
-		 for(int i=0;i<Constants.CONVEYOR_CELL_INDICES.length;i++){
-			 specialIndex.add(Constants.CONVEYOR_CELL_INDICES[i]);
-		 }
-		 for(int i=0;i<Constants.MONSTER_CELL_INDICES.length;i++){
-			 specialIndex.add(Constants.MONSTER_CELL_INDICES[i]);
-		 }
-		 for(int i=0;i<Constants.SOCK_CELL_INDICES.length;i++){
-			 specialIndex.add(Constants.SOCK_CELL_INDICES[i]);
-		 }
-		 for(int i=0;i<Constants.CARD_CELL_INDICES.length;i++){
-			 specialIndex.add(Constants.CARD_CELL_INDICES[i]);
-		 }
 		 for(int i=0;i<100;i++){
-			 if(!specialIndex.contains(i)){
 			 if(i%2==0){
 				 setCell(i,new Cell("Normal Cell"));
 			 }
 			 else{
 				 setCell(i,doorArray.get(j));
 				 j++;
-			 }}
+			 }
 		 }
 		 ArrayList<ContaminationSock> contaminationArray= new ArrayList<>();
 		 ArrayList<ConveyorBelt> conveyorArray= new ArrayList<>();
@@ -148,23 +127,32 @@ public class Board {
 		 for(int i=0; i<cardPositions.length;i++){
 			 setCell(cardPositions[i],new CardCell("Card cell"));
 		 }
-		 ArrayList<Monster> stationed = Board.getStationedMonsters();
+		 /*ArrayList<Monster> stationed = Board.getStationedMonsters();
 		 int[] cellMonsters = Constants.MONSTER_CELL_INDICES;
 		 for(int i=0;i<cellMonsters.length;i++){
-			 setCell(cellMonsters[i],new MonsterCell("Monster Cell",stationed.get(i)));
+			 setCell(cellMonsters[i],new MonsterCell(stationed.get(i).getName(),stationed.get(i)));
 			 
+		 }*/
+		 ArrayList<Monster> stationed = Board.getStationedMonsters();
+		 int[] cellMonsters = Constants.MONSTER_CELL_INDICES;
+		 if(stationed != null && !stationed.isEmpty()){
+		     for(int i=0;i<cellMonsters.length;i++){
+		         stationed.get(i).setPosition(cellMonsters[i]);
+		         setCell(cellMonsters[i], new MonsterCell(stationed.get(i).getName(), stationed.get(i)));
+		     }
 		 }
 		 
 	 }
 	 
 	 private void setCardsByRarity(){
-		 ArrayList<Card>  original= this.getOriginalCards();
+		 ArrayList<Card>  original= new ArrayList<Card>(originalCards);
 		 originalCards = new ArrayList<Card>();
 		 for(int i=0; i<original.size();i++){
 			 int count = original.get(i).getRarity();
 			 for(int j =0; j<count;j++){
-				 Card current=original.get(i);
-				 if(current instanceof ConfusionCard){
+				 originalCards.add(original.get(i));	
+				 
+				 /*if(current instanceof ConfusionCard){
 					 originalCards.add(new ConfusionCard(current.getName(),current.getDescription(),current.getRarity(),((ConfusionCard) current).getDuration())) ;
 					 //cards.add(new ConfusionCard(current.getName(),current.getDescription(),current.getRarity(),((ConfusionCard) current).getDuration())) ;
 						
@@ -187,7 +175,7 @@ public class Board {
 				 else if(current instanceof SwapperCard){
 					 originalCards.add(new SwapperCard(current.getName(),current.getDescription(),current.getRarity())) ;
 					 //cards.add(new SwapperCard(current.getName(),current.getDescription(),current.getRarity())) ;
-				 }
+				 }*/
 				
 			 }
 		 }

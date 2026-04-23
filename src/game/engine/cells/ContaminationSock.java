@@ -18,8 +18,9 @@ public class ContaminationSock extends TransportCell implements CanisterModifier
 		//by using 2.3.1 onLand method 
 	}
 	public void transport(Monster monster){
-		int temp = this.getEffect(); //i still want to check whether i will multiply by -1 or not bc in the constructor we already did ,Salma:it is already negative in the class
-		monster.move(temp);
+		int temp = this.getEffect();//i still want to check whether i will multiply by -1 or not bc in the constructor we already did ,Salma:it is already negative in the class
+		modifyCanisterEnergy(monster, -100);
+		monster.setPosition(monster.getPosition()+temp);
 	}
 	
 }
