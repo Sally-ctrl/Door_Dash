@@ -22,6 +22,8 @@ public class Game {
 		this.player = selectRandomMonsterByRole(playerRole);
 		this.opponent = selectRandomMonsterByRole(playerRole == Role.SCARER ? Role.LAUGHER : Role.SCARER);
 		this.current = player;
+		allMonsters.remove(player);
+		allMonsters.remove(opponent);
 		board.setStationedMonsters(allMonsters);
 	    board.initializeBoard(DataLoader.readCells());
 	}
