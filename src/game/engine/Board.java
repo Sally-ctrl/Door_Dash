@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Random;
 
-import game.engine.cards.Card;
 import game.engine.cells.*;
 import game.engine.monsters.Monster;
 import game.engine.cards.*;
@@ -85,6 +84,13 @@ public class Board {
 	 }
 	 public void initializeBoard(ArrayList<Cell> specialCells){
 		 ArrayList<TransportCell> transportArray = getTransportCells(specialCells);
+		 try {
+				Board.setStationedMonsters(DataLoader.readMonsters());
+             	
+    		} catch (IOException e) {
+        	e.printStackTrace();
+    		}
+    	Board.setStationedMonsters(stationedMonsters);
 		 ArrayList<DoorCell> doorArray = getDoorCells(specialCells);
 		 int j =0;
 		 ArrayList<Integer> specialIndex = new ArrayList<>();
