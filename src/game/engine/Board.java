@@ -9,6 +9,7 @@ import game.engine.cells.*;
 import game.engine.monsters.Monster;
 import game.engine.cards.*;
 import game.engine.dataloader.DataLoader;
+import game.engine.exceptions.InvalidMoveException;
 
 public class Board {
 	private Cell[][] boardCells;
@@ -21,6 +22,8 @@ public class Board {
 		stationedMonsters = new ArrayList<Monster>();
 		originalCards = readCards;
 		cards = new ArrayList<Card>();
+		this.setCardsByRarity();
+		reloadCards();
 	}
 	
 	public Cell[][] getBoardCells() {
@@ -45,10 +48,6 @@ public class Board {
 	
 	public static void setCards(ArrayList<Card> cards) {
 		Board.cards = cards;
-	}
-	public static Card drawCard(){
-		//will be implemented during game setup just a place holder for now for onLand() in CardCeLL class 
-		return new ConfusionCard("", "", 0, 0); //bc it has to return i had to make it return smth ok?
 	}
 	private int[] indexToRowCol(int index){
 		int row = index/10;
@@ -88,14 +87,28 @@ public class Board {
 		 ArrayList<TransportCell> transportArray = getTransportCells(specialCells);
 		 ArrayList<DoorCell> doorArray = getDoorCells(specialCells);
 		 int j =0;
+		 ArrayList<Integer> specialIndex = new ArrayList<>();
+		 for(int i=0;i<Constants.CONVEYOR_CELL_INDICES.length;i++){
+			 specialIndex.add(Constants.CONVEYOR_CELL_INDICES[i]);
+		 }
+		 for(int i=0;i<Constants.MONSTER_CELL_INDICES.length;i++){
+			 specialIndex.add(Constants.MONSTER_CELL_INDICES[i]);
+		 }
+		 for(int i=0;i<Constants.SOCK_CELL_INDICES.length;i++){
+			 specialIndex.add(Constants.SOCK_CELL_INDICES[i]);
+		 }
+		 for(int i=0;i<Constants.CARD_CELL_INDICES.length;i++){
+			 specialIndex.add(Constants.CARD_CELL_INDICES[i]);
+		 }
 		 for(int i=0;i<100;i++){
+			 if(!specialIndex.contains(i)){
 			 if(i%2==0){
 				 setCell(i,new Cell("Normal Cell"));
 			 }
 			 else{
 				 setCell(i,doorArray.get(j));
 				 j++;
-			 }
+			 }}
 		 }
 		 ArrayList<ContaminationSock> contaminationArray= new ArrayList<>();
 		 ArrayList<ConveyorBelt> conveyorArray= new ArrayList<>();
@@ -191,6 +204,38 @@ public class Board {
 		 cards = temp; 
 		 
 	 }
-	 
-	
+	 public void moveMonster(Monster currentMonster, int roll, Monster opponentMonster) throws InvalidMoveException{
+		 int currentPosition = currentMonster.getPosition();
+		 currentMonster.move(roll);
+		 Cell cell = getCell(currentMonster.getPosition());
+		 cell.onLand(currentMonster,opponentMonster);
+		 if(currentMonster.getPosition()==opponentMonster.getPosition()){
+			currentMonster.setPosition(currentPosition);
+			throw new InvalidMoveException();
+		 }  
+		 if(currentMonster.isConfused()&&opponentMonster.isConfused()){
+			 currentMonster.decrementConfusion();
+			 opponentMonster.decrementConfusion();}
+			 updateMonsterPositions(currentMonster,opponentMonster);
+}
+	 private void updateMonsterPositions(Monster player, Monster opponent){
+		 for(int i= 0;i<Constants.BOARD_ROWS;i++){
+			 for(int j=0;j<Constants.BOARD_COLS;j++){
+				 boardCells[i][j].setMonster(null);
+			 }
+		 }
+		 Cell playerCell = getCell(player.getPosition());
+		 Cell opponentCell = getCell(opponent.getPosition());
+		 playerCell.setMonster(player);
+		 opponentCell.setMonster(opponent);
+
+	 }
+	 public static Card drawCard(){
+		 if(cards.isEmpty()){
+			 Board.reloadCards();
+		 }
+		 Card card = cards.get(0);
+		 cards.remove(0);
+		 return card;
+	 }
 }
