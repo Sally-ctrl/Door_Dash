@@ -59,5 +59,49 @@ public class Game {
 	    		.findFirst()
 	    		.orElse(null);
 	}
-	
+	private Monster getCurrentOpponent(){
+		return current == player? opponent : player;
+	}
+	private int rollDice(){
+		return ((int)(Math.random()*6))+1;
+	}
+	public void usePowerup() throws OutOfEnergyException{
+		if(current.getEnergy<Constants.POWERUP COST){
+			throw new OutOfEnergyException("Not enough energy to use powerup.");
+		}
+		else{
+			current.alterEnergy(-Constants.POWERUP_COST);
+			current.executePowerupEffect(getCurrentOpponent());
+		}
+	}
+	public void playTurn() throws InvalidMoveException{
+		if(current.isFrozen()){
+			current.setFrozen(false);
+			switchTurn();
+			return;
+		}
+		else{
+			int roll = this.rollDice();
+			current.move(roll);
+			switchTurn();
+		}
+	}
+	private void switchTurn(){
+		this.current=this.getCurrentOpponent();
+	}
+	private boolean checkWinCondition(Monster monster){
+		return (monster.getEnergy()>=Constants.WINNING_ENERGY && monster.getPosition()==Constants.WINNING_POSITION) ;
+	}
+	public Monster getWinner(){
+		if(checkWinCondition(player)){
+			return player;
+		}
+		else if(checkWinCondition(opponent)){
+			return opponent;
+		}
+		else{
+			return null;
+		}
+	}
+
 }
