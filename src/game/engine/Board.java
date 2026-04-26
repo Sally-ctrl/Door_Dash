@@ -91,8 +91,10 @@ public class Board {
 				 setCell(i,new Cell("Normal Cell"));
 			 }
 			 else{
-				 setCell(i,doorArray.get(j));
-				 j++;
+				 if(j<doorArray.size()){
+					 setCell(i,doorArray.get(j));
+					 j++;
+				 }
 			 }
 		 }
 		 ArrayList<ContaminationSock> contaminationArray= new ArrayList<>();
@@ -109,15 +111,14 @@ public class Board {
 		 }
 		 int[] sockPositions = Constants.SOCK_CELL_INDICES;
 		 int[] conveyorPositions = Constants.CONVEYOR_CELL_INDICES;
-		 for(int i=0; i<sockPositions.length;i++){
+		 for(int i=0; i<sockPositions.length&& i<contaminationArray.size();i++){
 			 setCell(sockPositions[i],contaminationArray.get(i));
 			 
 		 }
-		 for(int i=0; i<conveyorPositions.length;i++){
+		 for(int i=0; i<conveyorPositions.length&& i<conveyorArray.size();i++){
 			 setCell(conveyorPositions[i],conveyorArray.get(i));
 		 }
 		 int[] cardPositions = Constants.CARD_CELL_INDICES;
-		
 		 for(int i=0; i<cardPositions.length;i++){
 			 setCell(cardPositions[i],new CardCell("Card cell"));
 		 }
@@ -125,7 +126,7 @@ public class Board {
 		 ArrayList<Monster> stationed = Board.getStationedMonsters();
 		 int[] cellMonsters = Constants.MONSTER_CELL_INDICES;
 		 if(stationed != null && !stationed.isEmpty()){
-		     for(int i=0;i<cellMonsters.length;i++){
+		     for(int i=0;i<cellMonsters.length&& i<stationed.size();i++){
 		         stationed.get(i).setPosition(cellMonsters[i]);
 		         setCell(cellMonsters[i], new MonsterCell(stationed.get(i).getName(), stationed.get(i)));
 		     }
@@ -140,6 +141,7 @@ public class Board {
 			 int count = original.get(i).getRarity();
 			 for(int j =0; j<count;j++){
 				 originalCards.add(original.get(i));	
+				
 			 }
 		 }
 	 }
@@ -149,7 +151,6 @@ public class Board {
 		 cards= new ArrayList<Card>(originalCards);
 		 ArrayList<Card> temp= new ArrayList<Card>();
 
-		 //helperLoad();
 		 int currentSize = cards.size();
 		 while(currentSize>0){
 			 int j = rand.nextInt(currentSize);
@@ -170,9 +171,11 @@ public class Board {
 			currentMonster.setPosition(currentPosition);
 			throw new InvalidMoveException();
 		 }  
-		 if(currentMonster.isConfused()&&opponentMonster.isConfused()){
-			 currentMonster.decrementConfusion();
-			 opponentMonster.decrementConfusion();}
+		 if (currentMonster.isConfused()) {
+			    currentMonster.decrementConfusion();
+			    if (opponentMonster.isConfused()) 
+			        opponentMonster.decrementConfusion();      
+			}
 			 updateMonsterPositions(currentMonster,opponentMonster);
 }
 	 private void updateMonsterPositions(Monster player, Monster opponent){
