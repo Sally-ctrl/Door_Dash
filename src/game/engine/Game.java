@@ -18,16 +18,16 @@ public class Game {
 	private Monster current;
 	
 	public Game(Role playerRole) throws IOException {
-		this.board = new Board(DataLoader.readCards());
-		
 		this.allMonsters = DataLoader.readMonsters();
+		this.board = new Board(DataLoader.readCards());
 		
 		this.player = selectRandomMonsterByRole(playerRole);
 		this.opponent = selectRandomMonsterByRole(playerRole == Role.SCARER ? Role.LAUGHER : Role.SCARER);
 		this.current = player;
-		allMonsters.remove(player);
-		allMonsters.remove(opponent);
-		board.setStationedMonsters(allMonsters);
+		ArrayList<Monster> stationed = new ArrayList<>(allMonsters);
+        stationed.remove(player);
+        stationed.remove(opponent);
+		board.setStationedMonsters(stationed);
 	    board.initializeBoard(DataLoader.readCells());
 	}
 	
@@ -68,11 +68,10 @@ public class Game {
 	}
 
 	private int rollDice(){
-		Random random = new Random();
-		return random.nextInt(6)+1;
+		return new Random().nextInt(6) + 1;
 	}
 
-	void usePowerup() throws OutOfEnergyException{
+	public void usePowerup() throws OutOfEnergyException{
 		if(current.getEnergy()<Constants.POWERUP_COST){
 			throw new OutOfEnergyException();
 		}
@@ -80,14 +79,14 @@ public class Game {
 		current.executePowerupEffect(getCurrentOpponent());
 	}
 
-	void playTurn() throws InvalidMoveException{
+	public void playTurn() throws InvalidMoveException{
 		if(getCurrent().isFrozen()){
 			getCurrent().setFrozen(false);
 			switchTurn();
 			return;
 		}
 		int roll = rollDice();
-		current.move(roll);
+		board.moveMonster(current, roll, getCurrentOpponent());
 		switchTurn();
 	}
 
@@ -95,15 +94,16 @@ public class Game {
 		current=getCurrentOpponent();
 	}
 
-	private boolean checkWinCondition(Monster monster){
-		return (current.getPosition() == Constants.WINNING_POSITION && current.getEnergy()>= Constants.WINNING_ENERGY);	
-	}
+	private boolean checkWinCondition(Monster monster) {
+    return monster.getPosition() == Constants.WINNING_POSITION 
+        && monster.getEnergy() >= Constants.WINNING_ENERGY;
+}
 
 	Monster getWinner(){
 		 return (checkWinCondition(current))?getCurrent():checkWinCondition(opponent)?getCurrentOpponent():null;
 	}
 
-	
+
 
 
 
