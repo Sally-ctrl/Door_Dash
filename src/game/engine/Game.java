@@ -3,8 +3,11 @@ package game.engine;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Random;
 
 import game.engine.dataloader.DataLoader;
+import game.engine.exceptions.InvalidMoveException;
+import game.engine.exceptions.OutOfEnergyException;
 import game.engine.monsters.*;
 
 public class Game {
@@ -59,5 +62,51 @@ public class Game {
 	    		.findFirst()
 	    		.orElse(null);
 	}
+
+	private Monster getCurrentOpponent(){
+		return (current == player)?opponent:player;
+	}
+
+	private int rollDice(){
+		Random random = new Random();
+		return random.nextInt(6)+1;
+	}
+
+	void usePowerup() throws OutOfEnergyException{
+		if(current.getEnergy()<Constants.POWERUP_COST){
+			throw new OutOfEnergyException();
+		}
+		current.setEnergy(current.getEnergy()-Constants.POWERUP_COST);
+		current.executePowerupEffect(getCurrentOpponent());
+	}
+
+	void playTurn() throws InvalidMoveException{
+		if(getCurrent().isFrozen()){
+			getCurrent().setFrozen(false);
+			switchTurn();
+			return;
+		}
+		int roll = rollDice();
+		current.move(roll);
+		switchTurn();
+	}
+
+	private void switchTurn(){
+		current=getCurrentOpponent();
+	}
+
+	private boolean checkWinCondition(Monster monster){
+		return (current.getPosition() == Constants.WINNING_POSITION && current.getEnergy()>= Constants.WINNING_ENERGY);	
+	}
+
+	Monster getWinner(){
+		 return (checkWinCondition(current))?getCurrent():checkWinCondition(opponent)?getCurrentOpponent():null;
+	}
+
 	
+
+
+
+
+
 }
