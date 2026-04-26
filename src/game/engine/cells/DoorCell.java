@@ -33,48 +33,50 @@ public class DoorCell extends Cell implements CanisterModifier {
 	public void setActivated(boolean isActivated) {
 		this.activated = isActivated;
 	}
+public ArrayList<Monster> getCurrentTeam(Role role){
+    ArrayList<Monster> team = new ArrayList<>();
+    ArrayList<Monster> allMonsters = Board.getStationedMonsters();
+    for(int i = 0; i < allMonsters.size(); i++){
+        if(allMonsters.get(i).getRole().equals(role)){  
+            team.add(allMonsters.get(i));
+        }
+    }
+    return team;
+}
 
-	public ArrayList<Monster> getCurrentTeam(Role role){
-		ArrayList<Monster> team = new ArrayList<>();
-		ArrayList<Monster> allMonsters = Board.getStationedMonsters();
-		for(int i =0;i<allMonsters.size();i++){
-			if(role == allMonsters.get(i).getRole()){
-				team.add(allMonsters.get(i));
-			}
-		}
-		return team;
-	}
-	public void modifyCanisterEnergy(Monster monster ,int canisterValue){
-		if(this.activated){
-			return;
-		}
-		ArrayList<Monster> team = getCurrentTeam(monster.getRole());
-		boolean isMatch = monster.getRole()==this.role;
-		int effect = isMatch?canisterValue:-canisterValue;
-		if (!team.contains(monster)) {
-        	team.add(monster);
-    	}
-		boolean consumed = false;
-		for(int i =0;i<team.size();i++){
-			//boolean before = team.get(i).isShielded();
-			int before = team.get(i).getEnergy();
-			team.get(i).alterEnergy(effect);
-			//boolean after = team.get(i).isShielded();
-			int after = team.get(i).getEnergy();
-			if (before !=after )
-				consumed= true;
-		}
-		if(consumed){
-			this.activated = true;
-		}
-	
-	}
+@Override
+public void modifyCanisterEnergy(Monster monster, int canisterValue) {
+    int effect = monster.getRole().equals(this.role) ? canisterValue : -canisterValue;
+    monster.alterEnergy(effect);
+}
 
-   public void onLand(Monster landingMonster,Monster opponetMonster){
-     this.modifyCanisterEnergy(landingMonster, this.energy);
+@Override
+public void onLand(Monster landingMonster, Monster opponentMonster) {
+    super.onLand(landingMonster, opponentMonster);
 
+    if (this.activated)
+        return;
 
-   }
+    ArrayList<Monster> team = getCurrentTeam(landingMonster.getRole());
+    boolean isSameRole = landingMonster.getRole().equals(this.role);
 
-	
+    if (isSameRole) {
+        this.modifyCanisterEnergy(landingMonster, this.energy); 
+        for (int i = 0; i < team.size(); i++)
+            modifyCanisterEnergy(team.get(i), this.energy);
+        this.activated = true;
+    } else {
+        if (landingMonster.isShielded()) {
+            this.modifyCanisterEnergy(landingMonster, this.energy);
+        } else {
+            this.modifyCanisterEnergy(landingMonster, this.energy); 
+            for (int i = 0; i < team.size(); i++)
+                modifyCanisterEnergy(team.get(i), this.energy);
+            this.activated = true;
+        }
+    }
+}
+    
+
+        
 }

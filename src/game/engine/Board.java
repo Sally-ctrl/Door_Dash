@@ -49,10 +49,10 @@ public class Board {
 		Board.cards = cards;
 	}
 	private int[] indexToRowCol(int index){
-		int row = index/10;
-		int col = index %10;
+		int row = index/Constants.BOARD_ROWS;
+		int col = index %Constants.BOARD_COLS;
 		if(row%2==1){
-			col = 9-col;
+			col = Constants.BOARD_COLS-1-col;
 		}
 		return new int[]{row,col};
 	}
@@ -117,22 +117,11 @@ public class Board {
 			 setCell(conveyorPositions[i],conveyorArray.get(i));
 		 }
 		 int[] cardPositions = Constants.CARD_CELL_INDICES;
-		 //ArrayList<Card> cardArray=null;
-		 //try{
-		//	 cardArray = DataLoader.readCards();
-		 //}
-		 //catch (IOException e){
-		//	 e.printStackTrace();
-		 //}
+		
 		 for(int i=0; i<cardPositions.length;i++){
 			 setCell(cardPositions[i],new CardCell("Card cell"));
 		 }
-		 /*ArrayList<Monster> stationed = Board.getStationedMonsters();
-		 int[] cellMonsters = Constants.MONSTER_CELL_INDICES;
-		 for(int i=0;i<cellMonsters.length;i++){
-			 setCell(cellMonsters[i],new MonsterCell(stationed.get(i).getName(),stationed.get(i)));
-			 
-		 }*/
+		 
 		 ArrayList<Monster> stationed = Board.getStationedMonsters();
 		 int[] cellMonsters = Constants.MONSTER_CELL_INDICES;
 		 if(stationed != null && !stationed.isEmpty()){
@@ -151,32 +140,6 @@ public class Board {
 			 int count = original.get(i).getRarity();
 			 for(int j =0; j<count;j++){
 				 originalCards.add(original.get(i));	
-				 
-				 /*if(current instanceof ConfusionCard){
-					 originalCards.add(new ConfusionCard(current.getName(),current.getDescription(),current.getRarity(),((ConfusionCard) current).getDuration())) ;
-					 //cards.add(new ConfusionCard(current.getName(),current.getDescription(),current.getRarity(),((ConfusionCard) current).getDuration())) ;
-						
-				 }
-				 else if(current instanceof EnergyStealCard){
-					 originalCards.add(new EnergyStealCard(current.getName(),current.getDescription(),current.getRarity(),((EnergyStealCard)current).getEnergy())) ;
-					 //cards.add(new EnergyStealCard(current.getName(),current.getDescription(),current.getRarity(),((EnergyStealCard)current).getEnergy())) ;
-					 
-				 }	
-				 else if(current instanceof ShieldCard){
-					 originalCards.add(new ShieldCard(current.getName(),current.getDescription(),current.getRarity())) ;
-					 //cards.add(new ShieldCard(current.getName(),current.getDescription(),current.getRarity())) ;
-					 
-				 }
-				 else if(current instanceof StartOverCard){
-					 originalCards.add(new StartOverCard(current.getName(),current.getDescription(),current.getRarity(),current.isLucky())) ;
-					 //cards.add(new StartOverCard(current.getName(),current.getDescription(),current.getRarity(),current.isLucky())) ;
-					 
-				 }
-				 else if(current instanceof SwapperCard){
-					 originalCards.add(new SwapperCard(current.getName(),current.getDescription(),current.getRarity())) ;
-					 //cards.add(new SwapperCard(current.getName(),current.getDescription(),current.getRarity())) ;
-				 }*/
-				
 			 }
 		 }
 	 }
