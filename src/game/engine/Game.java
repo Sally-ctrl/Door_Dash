@@ -24,10 +24,9 @@ public class Game {
 		this.player = selectRandomMonsterByRole(playerRole);
 		this.opponent = selectRandomMonsterByRole(playerRole == Role.SCARER ? Role.LAUGHER : Role.SCARER);
 		this.current = player;
-		ArrayList<Monster> stationed = new ArrayList<>(allMonsters);
-        stationed.remove(player);
-        stationed.remove(opponent);
-		board.setStationedMonsters(stationed);
+		allMonsters.remove(player);
+        allMonsters.remove(opponent);
+		Board.setStationedMonsters(allMonsters);
 	    board.initializeBoard(DataLoader.readCells());
 	}
 	
@@ -56,12 +55,14 @@ public class Game {
 	}
 	
 	private Monster selectRandomMonsterByRole(Role role) {
-		Collections.shuffle(allMonsters);
-	    return allMonsters.stream()
-	    		.filter(m -> m.getRole() == role)
-	    		.findFirst()
-	    		.orElse(null);
-	}
+    ArrayList<Monster> pool = new ArrayList<>();
+    for (Monster m : allMonsters) {
+        if (m.getRole().equals(role))
+            pool.add(m);
+    }
+    Collections.shuffle(pool);
+    return pool.isEmpty() ? null : pool.get(0);
+}
 
 	private Monster getCurrentOpponent(){
 		return (current == player)?opponent:player;
@@ -97,10 +98,14 @@ public class Game {
 	private boolean checkWinCondition(Monster monster) {
     return monster.getPosition() == Constants.WINNING_POSITION 
         && monster.getEnergy() >= Constants.WINNING_ENERGY;
-}
+	}
 
-	Monster getWinner(){
-		 return (checkWinCondition(current))?getCurrent():checkWinCondition(opponent)?getCurrentOpponent():null;
+		public Monster getWinner(){
+		if(checkWinCondition(player))
+			return player;
+		if(checkWinCondition(opponent))
+			return opponent;
+		return null;	
 	}
 
 
