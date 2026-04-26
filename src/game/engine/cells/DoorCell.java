@@ -44,37 +44,35 @@ public class DoorCell extends Cell implements CanisterModifier {
 		}
 		return team;
 	}
-	public void modifyCanisterEnergy(Monster monster ,int canisterValue){
-		if(this.activated){
-			return;
-		}
-		ArrayList<Monster> team = getCurrentTeam(monster.getRole());
-		boolean isMatch = monster.getRole()==this.role;
-		int effect = isMatch?canisterValue:-canisterValue;
-		if (!team.contains(monster)) {
-        	team.add(monster);
-    	}
-		boolean consumed = false;
-		for(int i =0;i<team.size();i++){
-			//boolean before = team.get(i).isShielded();
-			int before = team.get(i).getEnergy();
-			team.get(i).alterEnergy(effect);
-			//boolean after = team.get(i).isShielded();
-			int after = team.get(i).getEnergy();
-			if (before !=after )
-				consumed= true;
-		}
-		if(consumed){
-			this.activated = true;
-		}
-	
-	}
+@Override
+public void modifyCanisterEnergy(Monster monster, int canisterValue) {
+    int effect =  monster.getRole() == this.role ? canisterValue : -canisterValue;
+    monster.alterEnergy(effect);
+}
 
-   public void onLand(Monster landingMonster,Monster opponetMonster){
-     this.modifyCanisterEnergy(landingMonster, this.energy);
+@Override
+public void onLand(Monster landingMonster, Monster opponentMonster) {
+    super.onLand(landingMonster, opponentMonster);
 
+    if (this.activated)
+        return;
+    ArrayList<Monster> team = getCurrentTeam(landingMonster.getRole());
 
-   }
+    if (!team.contains(landingMonster))
+        team.add(landingMonster);
 
+    boolean consumed = false;
+        for (int i = 0; i < team.size(); i++) {
+            int before = team.get(i).getEnergy();
+            team.get(i).alterEnergy(this.energy);
+            int after = team.get(i).getEnergy();
+            if (before != after)
+                consumed = true;
+        }
+
+        if (consumed) {
+            this.activated = true;
+        }
+}
 	
 }

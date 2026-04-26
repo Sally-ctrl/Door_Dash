@@ -49,10 +49,10 @@ public class Board {
 		Board.cards = cards;
 	}
 	private int[] indexToRowCol(int index){
-		int row = index/10;
-		int col = index %10;
+		int row = index/Constants.BOARD_ROWS;
+		int col = index %Constants.BOARD_COLS;
 		if(row%2==1){
-			col = 9-col;
+			col = Constants.BOARD_COLS-1-col;
 		}
 		return new int[]{row,col};
 	}
