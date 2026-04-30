@@ -55,14 +55,12 @@ public class Game {
 	}
 	
 	private Monster selectRandomMonsterByRole(Role role) {
-    ArrayList<Monster> pool = new ArrayList<>();
-    for (Monster m : allMonsters) {
-        if (m.getRole().equals(role))
-            pool.add(m);
-    }
-    Collections.shuffle(pool);
-    return pool.isEmpty() ? null : pool.get(0);
-}
+		Collections.shuffle(allMonsters);
+	    return allMonsters.stream()
+	    		.filter(m -> m.getRole() == role)
+	    		.findFirst()
+	    		.orElse(null);
+	}
 
 	private Monster getCurrentOpponent(){
 		return (current == player)?opponent:player;

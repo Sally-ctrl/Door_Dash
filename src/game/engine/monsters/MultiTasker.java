@@ -31,9 +31,8 @@ public void setEnergy(int energy) {
 @Override
 	public void move(int distance){
 		if(normalSpeedTurns==0){
-			if(distance==1)
-				return;
-		 super.move(distance/2); }
+		 	super.move(distance/2); 
+		}
 		else{
 			this.setNormalSpeedTurns(this.normalSpeedTurns-1);
 			super.move(distance);

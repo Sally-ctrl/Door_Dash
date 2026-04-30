@@ -36,7 +36,7 @@ public class Schemer extends Monster {
 				}
 			}
 
-			this.setEnergy(this.getEnergy() + totalStolen);// not alterenegy because schemer ignores shield
+			this.setEnergy(this.getEnergy() + totalStolen);
 			
 		}
 
@@ -45,7 +45,7 @@ public class Schemer extends Monster {
     	int current = getEnergy();
     	int delta = energy - current;
     	super.setEnergy(current + (delta + Constants.SCHEMER_STEAL));
-}
+	}
 }	
 	
 

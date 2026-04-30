@@ -14,7 +14,7 @@ public class EnergyStealCard extends Card implements CanisterModifier {
 	public int getEnergy() {
 		return energy;
 	}
-	
+	@Override
 	public void performAction(Monster player, Monster opponent){
 		if(opponent.isShielded()){
 			opponent.setShielded(false);
@@ -29,7 +29,6 @@ public class EnergyStealCard extends Card implements CanisterModifier {
 
 		if (amountToSteal <= 0) return;
 
-		
 		modifyCanisterEnergy(opponent, -amountToSteal);
 		modifyCanisterEnergy(player, amountToSteal);  
 		
