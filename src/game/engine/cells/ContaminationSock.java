@@ -7,9 +7,7 @@ public class ContaminationSock extends TransportCell implements CanisterModifier
 	public  ContaminationSock(String name, int effect){
 		super(name,-Math.abs(effect));
 	}
-	public void onLand(Monster landingMonster,Monster opponetMonster){ 
-		super.onLand(landingMonster, opponetMonster);
-	}
+	
 	public void modifyCanisterEnergy(Monster monster,int canisterValue){
 		monster.alterEnergy(canisterValue);
 	}
