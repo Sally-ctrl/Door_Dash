@@ -5,8 +5,6 @@ import game.engine.monsters.Monster;
 public class ConveyorBelt extends TransportCell {
 
 	public ConveyorBelt(String name, int effect) {
-		super(name, effect);
+		super(name, Math.abs(effect));
 	}
-	//note i didnt override transport here bc tasks wants it to call with the positive value of effect which the parent already does
-	
 }

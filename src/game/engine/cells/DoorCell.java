@@ -67,7 +67,7 @@ public void onLand(Monster landingMonster, Monster opponentMonster) {
         this.activated = true;
     } else {
         if (landingMonster.isShielded()) {
-            this.modifyCanisterEnergy(landingMonster, this.energy);
+            this.modifyCanisterEnergy(landingMonster, this.energy); // to consume shield 
         } else {
             this.modifyCanisterEnergy(landingMonster, this.energy); 
             for (int i = 0; i < team.size(); i++)
