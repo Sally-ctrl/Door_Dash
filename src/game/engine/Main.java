@@ -1,4 +1,7 @@
 package game.engine;
+import javafx.scene.image.*;
+
+import java.io.IOException;
 
 import javafx.application.*;
 import javafx.geometry.*;
@@ -10,6 +13,8 @@ import javafx.stage.*;
 import javafx.beans.binding.*;
 
 public class Main extends Application {
+    private GameController controller;
+    private Game game;
     public void start(Stage stage){
         stage.setMinHeight(700);
         stage.setMinWidth(1000);
@@ -73,6 +78,15 @@ public class Main extends Application {
     }
 
     public void Game(Stage stage) {
+        try {
+            this.game = new Game(Role.LAUGHER); // need to be changed when player chooses team
+            controller = new GameController(this.game, this);
+            } 
+        catch (IOException e) {
+            System.out.println("Failed to load game data");
+            return;
+        }
+
         GridPane board = new GridPane();
         board.setAlignment(Pos.CENTER);
         board.setGridLinesVisible(false);
@@ -127,6 +141,7 @@ public class Main extends Application {
         stage.setScene(new Scene(root));
         stage.setMaximized(true);
     }
+    
 
 
     public static void main(String[] args) {
