@@ -85,13 +85,21 @@ public class Main extends Application {
         bottom.setPrefHeight(120);
         bottom.setStyle("-fx-background-color: #2a2a4e;");
 
+        NumberBinding cellSize = Bindings.min(
+            stage.widthProperty().subtract(240).divide(10),
+            stage.heightProperty().subtract(240).divide(10)
+        );
         VBox left = new VBox(10);
-        left.setPrefWidth(120);
+        left.prefWidthProperty().bind(
+            stage.widthProperty().subtract(cellSize.multiply(10)).divide(2)
+            );
         left.setAlignment(Pos.CENTER);
         left.setStyle("-fx-background-color: #2a2a4e;");
 
         VBox right = new VBox(10);
-        right.setPrefWidth(120);
+        right.prefWidthProperty().bind(
+        stage.widthProperty().subtract(cellSize.multiply(10)).divide(2)
+        );
         right.setAlignment(Pos.CENTER);
         right.setStyle("-fx-background-color: #2a2a4e;");
 
@@ -102,11 +110,7 @@ public class Main extends Application {
         root.setLeft(left);
         root.setStyle("-fx-background-color: #1a1a2e;");
 
-        // Now bind AFTER panels are added to root
-        NumberBinding cellSize = Bindings.min(
-            root.widthProperty().subtract(left.prefWidthProperty()).subtract(right.prefWidthProperty()).divide(Constants.BOARD_COLS),
-            root.heightProperty().subtract(top.prefHeightProperty()).subtract(bottom.prefHeightProperty()).divide(Constants.BOARD_ROWS)
-        );
+        
 
         for (int i = 0; i < Constants.BOARD_ROWS; i++) {
             for (int j = 0; j < Constants.BOARD_COLS; j++) {
