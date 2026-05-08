@@ -72,7 +72,7 @@ public class Main extends Application {
 
     }
 
-    public void  Game(Stage stage){
+    public void Game(Stage stage) {
         GridPane board = new GridPane();
         board.setAlignment(Pos.CENTER);
         board.setGridLinesVisible(false);
@@ -84,8 +84,7 @@ public class Main extends Application {
         HBox bottom = new HBox();
         bottom.setPrefHeight(120);
         bottom.setStyle("-fx-background-color: #2a2a4e;");
-       
-        
+
         VBox left = new VBox(10);
         left.setPrefWidth(120);
         left.setAlignment(Pos.CENTER);
@@ -96,28 +95,31 @@ public class Main extends Application {
         right.setAlignment(Pos.CENTER);
         right.setStyle("-fx-background-color: #2a2a4e;");
 
-        for(int i = 0; i < Constants.BOARD_COLS; i++){
-            for(int j = 0; j < Constants.BOARD_ROWS; j++){
+        BorderPane root = new BorderPane();
+        root.setTop(top);
+        root.setBottom(bottom);
+        root.setRight(right);
+        root.setLeft(left);
+        root.setStyle("-fx-background-color: #1a1a2e;");
+
+        // Now bind AFTER panels are added to root
+        NumberBinding cellSize = Bindings.min(
+            root.widthProperty().subtract(left.prefWidthProperty()).subtract(right.prefWidthProperty()).divide(Constants.BOARD_COLS),
+            root.heightProperty().subtract(top.prefHeightProperty()).subtract(bottom.prefHeightProperty()).divide(Constants.BOARD_ROWS)
+        );
+
+        for (int i = 0; i < Constants.BOARD_ROWS; i++) {
+            for (int j = 0; j < Constants.BOARD_COLS; j++) {
                 StackPane cell = new StackPane();
                 cell.setStyle("-fx-background-color: #f5e6c8; -fx-border-color: #999;");
-                var cellSize = Bindings.min(
-                    stage.widthProperty().subtract(left.widthProperty()).subtract(right.widthProperty()).divide(10),
-                    stage.heightProperty().subtract(top.heightProperty()).subtract(bottom.heightProperty()).divide(10)
-                );
                 cell.prefWidthProperty().bind(cellSize);
                 cell.prefHeightProperty().bind(cellSize);
                 board.add(cell, j, i);
             }
         }
-        
 
-        BorderPane root = new BorderPane();
-        root.setTop(top);
         root.setCenter(board);
-        root.setBottom(bottom);
-        root.setRight(right);
-        root.setLeft(left);
-        root.setStyle("-fx-background-color: #1a1a2e;");
+
         stage.setScene(new Scene(root));
         stage.setMaximized(true);
     }
