@@ -18,8 +18,6 @@ public class Main extends Application {
     public void start(Stage stage){
         stage.setMinHeight(700);
         stage.setMinWidth(1000);
-        //stage.setMaxHeight(900);
-        //stage.setMaxWidth(1000);
         stage.setMaximized(true);
         WelcomeStage(stage);
         stage.show();
@@ -135,12 +133,14 @@ public class Main extends Application {
                 board.add(cell, j, i);
             }
         }
-
         root.setCenter(board);
-
+        controller.loadBoard(board,cellSize);
+        
         stage.setScene(new Scene(root));
         stage.setMaximized(true);
     }
+
+
     
 
 
