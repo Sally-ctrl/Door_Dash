@@ -227,12 +227,7 @@ public void drawDoorLine(Pane overlay, GridPane board, int fromIndex, int toInde
 
         double distance = Math.sqrt(Math.pow(toX - fromX, 2) + Math.pow(toY - fromY, 2));
 
-        // main conveyor rail
-        javafx.scene.shape.Line rail = new javafx.scene.shape.Line(fromX, fromY, toX, toY);
-        rail.setStroke(javafx.scene.paint.Color.web("#333333"));
-        rail.setStrokeWidth(5);
-        rail.setOpacity(0.9);
-        overlay.getChildren().add(rail);
+       
 
         // two thin rails to make it look like a track
         javafx.scene.shape.Line rail2 = new javafx.scene.shape.Line(fromX, fromY + 6, toX, toY + 6);
