@@ -133,9 +133,14 @@ public class Main extends Application {
                 board.add(cell, j, i);
             }
         }
-        root.setCenter(board);
+    
+        Pane overlay = new Pane();
+        overlay.setMouseTransparent(true); // so it doesn't block clicks
+        StackPane boardWithOverlay = new StackPane();
+        boardWithOverlay.getChildren().addAll(board, overlay);
+        root.setCenter(boardWithOverlay);
         controller.loadBoard(board,cellSize);
-        
+        controller.drawTransports(overlay, board);
         stage.setScene(new Scene(root));
         stage.setMaximized(true);
     }

@@ -1,5 +1,7 @@
 package game.engine;
 
+import java.util.Random;
+
 import game.engine.cells.CardCell;
 import game.engine.cells.Cell;
 import game.engine.cells.ContaminationSock;
@@ -62,10 +64,33 @@ public class GameController {
             }
 
     }
+    // drawing the ladders for contamination socks and hanging doors for conveyer belts
+
+    public void drawTransports (Pane overlay,GridPane board){
+        Cell [][] cells = game.getBoard().getBoardCells();
+        int max_size = Constants.BOARD_COLS*Constants.BOARD_ROWS;
+        for(int i =0 ; i<max_size;i++){
+            int[] rowCol = indexToRowCol(i);
+            int x =rowCol[0];
+            int y = rowCol[1];
+            Cell cell = cells[x][y];
+            if(cell instanceof ContaminationSock){
+                int effect = ((ContaminationSock)cell).getEffect();
+                if(i+effect<max_size)
+                    drawLadder(overlay, board, i, i+effect);
+            }
+            if(cell instanceof ConveyorBelt){
+                int effect = ((ConveyorBelt)cell).getEffect();
+                if(i+effect<max_size)
+                    drawDoorLine(overlay, board, i, i+effect);
+            }
+        }
+
+    }
     public String getImagePath(Cell cell,int i){  
         if(cell instanceof DoorCell){
             if(i == Constants.BOARD_COLS*Constants.BOARD_ROWS-1){
-                return "/game/images/winnerdoor.png";
+                return "/game/images/winnerdoor2.jpeg";
             }
             int doorNumber = (doorcount % 2) + 1;
             if (((DoorCell) cell).isActivated()) {
@@ -120,5 +145,146 @@ public class GameController {
     }
     return new int[]{row, col};
     }
-    
+
+public void drawLadder(Pane overlay, GridPane board, int fromIndex, int toIndex) {
+    javafx.scene.Node fromNode = getNodeFromGrid(board, fromIndex);
+    javafx.scene.Node toNode = getNodeFromGrid(board, toIndex);
+
+    if (fromNode == null || toNode == null) return;
+
+    Platform.runLater(() -> {
+        Bounds fromBounds = fromNode.localToScene(fromNode.getBoundsInLocal());
+        Bounds toBounds = toNode.localToScene(toNode.getBoundsInLocal());
+        Bounds overlayBounds = overlay.localToScene(overlay.getBoundsInLocal());
+
+        double fromX = fromBounds.getCenterX() - overlayBounds.getMinX();
+        double fromY = fromBounds.getCenterY() - overlayBounds.getMinY();
+        double toX = toBounds.getCenterX() - overlayBounds.getMinX();
+        double toY = toBounds.getCenterY() - overlayBounds.getMinY();
+
+        // angle and distance
+        double angle = Math.atan2(toY - fromY, toX - fromX);
+        double distance = Math.sqrt(Math.pow(toX - fromX, 2) + Math.pow(toY - fromY, 2));
+
+        double ladderWidth = 12; // gap between the two rails
+        double rungSpacing = 15; // space between rungs
+
+        // offset perpendicular to the ladder direction for the two rails
+        double perpX = Math.cos(angle + Math.PI / 2) * ladderWidth;
+        double perpY = Math.sin(angle + Math.PI / 2) * ladderWidth;
+
+        // left rail
+        javafx.scene.shape.Line leftRail = new javafx.scene.shape.Line(
+            fromX - perpX, fromY - perpY,
+            toX - perpX, toY - perpY
+        );
+        leftRail.setStroke(javafx.scene.paint.Color.web("#8B4513")); // brown wood color
+        leftRail.setStrokeWidth(3);
+
+        // right rail
+        javafx.scene.shape.Line rightRail = new javafx.scene.shape.Line(
+            fromX + perpX, fromY + perpY,
+            toX + perpX, toY + perpY
+        );
+        rightRail.setStroke(javafx.scene.paint.Color.web("#8B4513"));
+        rightRail.setStrokeWidth(3);
+
+        overlay.getChildren().addAll(leftRail, rightRail);
+
+        // rungs
+        int numRungs = (int) (distance / rungSpacing);
+        for (int r = 1; r < numRungs; r++) {
+            double t = (double) r / numRungs;
+            double rungCenterX = fromX + t * (toX - fromX);
+            double rungCenterY = fromY + t * (toY - fromY);
+
+            javafx.scene.shape.Line rung = new javafx.scene.shape.Line(
+                rungCenterX - perpX, rungCenterY - perpY,
+                rungCenterX + perpX, rungCenterY + perpY
+            );
+            rung.setStroke(javafx.scene.paint.Color.web("#A0522D")); // slightly lighter brown
+            rung.setStrokeWidth(2);
+            overlay.getChildren().add(rung);
+        }
+    });
+}
+
+public void drawDoorLine(Pane overlay, GridPane board, int fromIndex, int toIndex) {
+    javafx.scene.Node fromNode = getNodeFromGrid(board, fromIndex);
+    javafx.scene.Node toNode = getNodeFromGrid(board, toIndex);
+
+    if (fromNode == null || toNode == null) return;
+
+    Platform.runLater(() -> {
+        Bounds fromBounds = fromNode.localToScene(fromNode.getBoundsInLocal());
+        Bounds toBounds = toNode.localToScene(toNode.getBoundsInLocal());
+        Bounds overlayBounds = overlay.localToScene(overlay.getBoundsInLocal());
+
+        double fromX = fromBounds.getCenterX() - overlayBounds.getMinX();
+        double fromY = fromBounds.getCenterY() - overlayBounds.getMinY();
+        double toX = toBounds.getCenterX() - overlayBounds.getMinX();
+        double toY = toBounds.getCenterY() - overlayBounds.getMinY();
+
+        double distance = Math.sqrt(Math.pow(toX - fromX, 2) + Math.pow(toY - fromY, 2));
+
+        // main conveyor rail
+        javafx.scene.shape.Line rail = new javafx.scene.shape.Line(fromX, fromY, toX, toY);
+        rail.setStroke(javafx.scene.paint.Color.web("#333333"));
+        rail.setStrokeWidth(5);
+        rail.setOpacity(0.9);
+        overlay.getChildren().add(rail);
+
+        // two thin rails to make it look like a track
+        javafx.scene.shape.Line rail2 = new javafx.scene.shape.Line(fromX, fromY + 6, toX, toY + 6);
+        rail2.setStroke(javafx.scene.paint.Color.web("#333333"));
+        rail2.setStrokeWidth(3);
+        rail2.setOpacity(0.9);                                          
+        overlay.getChildren().add(rail2);
+
+        double gap = 30;
+        int numDoors = (int)(distance / gap);
+        double stringLength = 6;
+        double doorWidth = 14;
+        double doorHeight = 20;
+
+        // ↓ array of door images to pick from randomly
+        String[] doorImages = {
+            "/game/images/doorhanging.jpeg",
+            "/game/images/doorhanging2.png",
+            "/game/images/doorhanging3.png"
+            
+        };
+        Random random = new Random();                                   // ← random picker
+
+        // ↓ old single image line removed, now picked inside loop
+        for (int d = 0; d <= numDoors; d++) {
+            double t = (double) d / numDoors;
+            double hangX = fromX + t * (toX - fromX);
+            double hangY = fromY + t * (toY - fromY);
+
+            // ↓ pick a random door image each iteration
+            String randomPath = doorImages[random.nextInt(doorImages.length)];
+            Image doorImage = new Image(getClass().getResourceAsStream(randomPath));
+
+            // short string from rail to door
+            javafx.scene.shape.Line string = new javafx.scene.shape.Line(
+                hangX, hangY + 6,
+                hangX, hangY + 6 + stringLength
+            );
+            string.setStroke(javafx.scene.paint.Color.web("#888888"));
+            string.setStrokeWidth(1);
+
+            // door image
+            ImageView doorView = new ImageView(doorImage);
+            doorView.setFitWidth(doorWidth);
+            doorView.setFitHeight(doorHeight);
+            doorView.setPreserveRatio(false);
+            doorView.setX(hangX - doorWidth / 2);
+            doorView.setY(hangY + 6 + stringLength);
+            doorView.setOpacity(0.9);
+
+            overlay.getChildren().addAll(string, doorView);
+        }
+    });
+}
 }
