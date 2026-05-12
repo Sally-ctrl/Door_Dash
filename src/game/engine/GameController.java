@@ -1,5 +1,6 @@
 package game.engine;
 
+import java.io.IOException;
 import java.util.Random;
 
 import game.engine.cells.CardCell;
@@ -8,6 +9,7 @@ import game.engine.cells.ContaminationSock;
 import game.engine.cells.ConveyorBelt;
 import game.engine.cells.DoorCell;
 import game.engine.cells.MonsterCell;
+import game.engine.monsters.Monster;
 import javafx.application.*;
 import javafx.geometry.*;
 import javafx.scene.*;
@@ -26,8 +28,11 @@ public class GameController {
     private Main mainView;
     private int doorcount=0;
 
-    public GameController (Game game ,Main mainView){
+    /*public GameController (Game game ,Main mainView){
         this.game = game;
+        this.mainView = mainView;
+    }*/
+    public GameController(Main mainView) {
         this.mainView = mainView;
     }
 
@@ -157,10 +162,14 @@ public void drawLadder(Pane overlay, GridPane board, int fromIndex, int toIndex)
         Bounds toBounds = toNode.localToScene(toNode.getBoundsInLocal());
         Bounds overlayBounds = overlay.localToScene(overlay.getBoundsInLocal());
 
-        double fromX = fromBounds.getCenterX() - overlayBounds.getMinX();
+       /* double fromX = fromBounds.getCenterX() - overlayBounds.getMinX();
         double fromY = fromBounds.getCenterY() - overlayBounds.getMinY();
         double toX = toBounds.getCenterX() - overlayBounds.getMinX();
-        double toY = toBounds.getCenterY() - overlayBounds.getMinY();
+        double toY = toBounds.getCenterY() - overlayBounds.getMinY();*/
+        double fromX = (fromBounds.getMinX() + fromBounds.getMaxX()) / 2 - overlayBounds.getMinX();
+        double fromY = (fromBounds.getMinY() + fromBounds.getMaxY()) / 2 - overlayBounds.getMinY();
+        double toX = (toBounds.getMinX() + toBounds.getMaxX()) / 2 - overlayBounds.getMinX();
+        double toY = (toBounds.getMinY() + toBounds.getMaxY()) / 2 - overlayBounds.getMinY();
 
         // angle and distance
         double angle = Math.atan2(toY - fromY, toX - fromX);
@@ -220,10 +229,14 @@ public void drawDoorLine(Pane overlay, GridPane board, int fromIndex, int toInde
         Bounds toBounds = toNode.localToScene(toNode.getBoundsInLocal());
         Bounds overlayBounds = overlay.localToScene(overlay.getBoundsInLocal());
 
-        double fromX = fromBounds.getCenterX() - overlayBounds.getMinX();
+        /*double fromX = fromBounds.getCenterX() - overlayBounds.getMinX();
         double fromY = fromBounds.getCenterY() - overlayBounds.getMinY();
         double toX = toBounds.getCenterX() - overlayBounds.getMinX();
-        double toY = toBounds.getCenterY() - overlayBounds.getMinY();
+        double toY = toBounds.getCenterY() - overlayBounds.getMinY();*/
+        double fromX = (fromBounds.getMinX() + fromBounds.getMaxX()) / 2 - overlayBounds.getMinX();
+        double fromY = (fromBounds.getMinY() + fromBounds.getMaxY()) / 2 - overlayBounds.getMinY();
+        double toX = (toBounds.getMinX() + toBounds.getMaxX()) / 2 - overlayBounds.getMinX();
+        double toY = (toBounds.getMinY() + toBounds.getMaxY()) / 2 - overlayBounds.getMinY();
 
         double distance = Math.sqrt(Math.pow(toX - fromX, 2) + Math.pow(toY - fromY, 2));
 
@@ -242,22 +255,22 @@ public void drawDoorLine(Pane overlay, GridPane board, int fromIndex, int toInde
         double doorWidth = 14;
         double doorHeight = 20;
 
-        // ↓ array of door images to pick from randomly
+        // â†“ array of door images to pick from randomly
         String[] doorImages = {
             "/game/images/doorhanging.jpeg",
             "/game/images/doorhanging2.png",
             "/game/images/doorhanging3.png"
             
         };
-        Random random = new Random();                                   // ← random picker
+        Random random = new Random();                                   // â†� random picker
 
-        // ↓ old single image line removed, now picked inside loop
+        // â†“ old single image line removed, now picked inside loop
         for (int d = 0; d <= numDoors; d++) {
             double t = (double) d / numDoors;
             double hangX = fromX + t * (toX - fromX);
             double hangY = fromY + t * (toY - fromY);
 
-            // ↓ pick a random door image each iteration
+            // â†“ pick a random door image each iteration
             String randomPath = doorImages[random.nextInt(doorImages.length)];
             Image doorImage = new Image(getClass().getResourceAsStream(randomPath));
 
@@ -282,4 +295,16 @@ public void drawDoorLine(Pane overlay, GridPane board, int fromIndex, int toInde
         }
     });
 }
+	public void selectRole(Role role, Stage stage) throws IOException {
+	    this.game = new Game(role);
+	    mainView.showMonsterRevealScreen(stage);
+	}
+	
+	public Monster getPlayer() {
+	    return game.getPlayer();
+	}
+	
+	public Monster getOpponent() {
+	    return game.getOpponent();
+	}
 }

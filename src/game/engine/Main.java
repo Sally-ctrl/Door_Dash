@@ -1,6 +1,6 @@
 package game.engine;
+import game.engine.monsters.*;
 import javafx.scene.image.*;
-
 import java.io.IOException;
 
 import javafx.application.*;
@@ -16,6 +16,8 @@ public class Main extends Application {
     private GameController controller;
     private Game game;
     public void start(Stage stage){
+    	//i updated the constructor of game controller as well to create the game controller as soon as the view is launched 
+    	this.controller = new GameController(this);
         stage.setMinHeight(700);
         stage.setMinWidth(1000);
         stage.setMaximized(true);
@@ -31,22 +33,22 @@ public class Main extends Application {
 
         Label description = new Label(
     "The goal:\n" +
-    "Be the first monster to reach cell 99 (Boo’s Door) with at least 1000 energy\n\n" +
+    "Be the first monster to reach cell 99 (Booâ€™s Door) with at least 1000 energy\n\n" +
     "How to Win\n" +
     "You win if you:\n" +
     "Reach cell 99, AND\n" +
     "Have 1000 or more energy\n\n" +
     "On Your Turn:\n\n" +
     "(Optional) Use your monster powerup (costs 500 energy if used manually).\n\n" +
-    "Roll a 6-sided dice (1–6).\n" +
+    "Roll a 6-sided dice (1â€“6).\n" +
     "Move forward that number of cells.\n" +
     "Apply the effect of the cell you land on:\n" +
-    "- Doors → gain or lose energy for your whole team\n" +
-    "- Cards → draw a random card effect\n" +
-    "- Monster cells → trigger special monster interactions\n" +
-    "- Conveyor/Socks → move forward/backward with effects\n" +
-    "- Normal cell → nothing happens\n\n" +
-    "If you land on the opponent’s cell → your move is cancelled and you retry."
+    "- Doors â†’ gain or lose energy for your whole team\n" +
+    "- Cards â†’ draw a random card effect\n" +
+    "- Monster cells â†’ trigger special monster interactions\n" +
+    "- Conveyor/Socks â†’ move forward/backward with effects\n" +
+    "- Normal cell â†’ nothing happens\n\n" +
+    "If you land on the opponentâ€™s cell â†’ your move is cancelled and you retry."
         );
         description.setWrapText(true);
         description.setFont(Font.font("Arial", 16));
@@ -56,10 +58,12 @@ public class Main extends Application {
         root.setPadding(new Insets(60));
         root.setStyle("-fx-background-color: #bb69e1;");
 
-        Button playButton = new Button("▶  PLAY");
+        Button playButton = new Button("â–¶  PLAY");
         playButton.setFont(Font.font("Arial", FontWeight.BOLD, 22));
         playButton.setStyle("-fx-background-color: #ff6600; -fx-text-fill: white; -fx-padding: 14 40 14 40; -fx-background-radius: 30;");
-        playButton.setOnAction(e -> Game(stage));
+        
+        //changed this to e -> showTeam bc from showTeam it will go to game stage 
+        playButton.setOnAction(e ->  showTeamSelectScreen(stage));
         
         root.getChildren().addAll(title,description,playButton);
 
@@ -72,18 +76,160 @@ public class Main extends Application {
     }
 
     public void  showTeamSelectScreen(Stage stage){
+        stage.setTitle("Door Dash: Scare vs Laugh Touchdown");
+  
+        Label title = new Label("CHOOSE YOUR SIDE");
+        title.setFont(Font.font("Arial", FontWeight.BOLD, 42));
+        title.setStyle("-fx-text-fill: white;");
+     
+        Label subtitle = new Label("Who will prove their worth on the Floor?");
+        subtitle.setFont(Font.font("Arial", FontWeight.NORMAL, 18));
+        subtitle.setStyle("-fx-text-fill: #cccccc;");
+        // ---------- SCARER Card (Sully - blue guy) ----------
+        VBox scarerCard = buildRoleCard(
+            "SCARER",
+            "/blue guy.jpeg",
+            "Harness the power of screams!\nTerrorize children for energy.\nBring fear to the Floor.",
+            "#ff4444"  // red accent
+        );
+     
+        // ---------- LAUGHER Card (Mike - green guy) ----------
+        VBox laugherCard = buildRoleCard(
+            "LAUGHER",
+            "/green guy.jpeg",
+            "Revolutionize with laughter!\nLaughter produces 10x more energy.\nBring joy to the Floor.",
+            "#44ff44"  // green accent
+        );
+     
+        // ---------- Click Actions ----------
+        scarerCard.setOnMouseClicked(e -> {
+            try {
+               //this.game = new Game(Role.SCARER);
+               // this.controller = new GameController(this.game, this);
+                //showMonsterRevealScreen(stage);#
+            	controller.selectRole(Role.SCARER, stage);
+            } catch (IOException ex) {
+                showErrorAlert("Failed to load game data: " + ex.getMessage());
+            }
+        });
+     
+        laugherCard.setOnMouseClicked(e -> {
+            try {
+                //this.game = new Game(Role.LAUGHER);
+                //this.controller = new GameController(this.game, this);
+                //showMonsterRevealScreen(stage);
+            	controller.selectRole(Role.SCARER, stage);
+            } catch (IOException ex) {
+                showErrorAlert("Failed to load game data: " + ex.getMessage());
+            }
+        });
+     
+        // ---------- Cards Row ----------
+        HBox cardsRow = new HBox(60, scarerCard, laugherCard);
+        cardsRow.setAlignment(Pos.CENTER);
+     
+        // ---------- Back Button ----------
+        Button backButton = new Button("← Back");
+        backButton.setFont(Font.font("Arial", 14));
+        backButton.setStyle(
+            "-fx-background-color: transparent;" +
+            "-fx-text-fill: #aaaaaa;" +
+            "-fx-border-color: #aaaaaa;" +
+            "-fx-border-radius: 20;" +
+            "-fx-padding: 8 24 8 24;"
+        );
+        backButton.setOnAction(e -> WelcomeStage(stage));
+     
+        // ---------- Root Layout ----------
+        VBox root = new VBox(30, title, subtitle, cardsRow, backButton);
+        root.setAlignment(Pos.CENTER);
+        root.setPadding(new Insets(60));
+        root.setStyle("-fx-background-color: #1a1a2e;");
+     
+        stage.setScene(new Scene(root));
+        stage.setMaximized(true);
+        
 
     }
+    //this method  is to create the id cardsof the  monsters
+    private VBox buildRoleCard(String roleName, String imagePath,
+            String description, String accentColor) {
+
+			// --- ID Card Image ---
+			ImageView idCard = new ImageView(
+			new Image(getClass().getResourceAsStream(imagePath))
+			);
+			idCard.setFitWidth(220);
+			idCard.setFitHeight(160);
+			idCard.setPreserveRatio(true);
+			
+			// --- Role Name ---
+			Label roleLabel = new Label(roleName);
+			roleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+			roleLabel.setStyle("-fx-text-fill: " + accentColor + ";");
+			
+			// --- Description ---
+			Label descLabel = new Label(description);
+			descLabel.setFont(Font.font("Arial", 13));
+			descLabel.setStyle("-fx-text-fill: #dddddd;");
+			descLabel.setWrapText(true);
+			descLabel.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+			descLabel.setMaxWidth(220);
+			
+			// --- Click Hint ---
+			Label clickHint = new Label("Click to choose");
+			clickHint.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+			clickHint.setStyle("-fx-text-fill: " + accentColor + ";");
+			
+			// --- Card Container ---
+			VBox card = new VBox(14, idCard, roleLabel, descLabel, clickHint);
+			card.setAlignment(Pos.CENTER);
+			card.setPadding(new Insets(30));
+			card.setPrefWidth(280);
+			card.setStyle(
+			"-fx-background-color: #2a2a4e;" +
+			"-fx-background-radius: 20;" +
+			"-fx-border-color: " + accentColor + ";" +
+			"-fx-border-width: 2;" +
+			"-fx-border-radius: 20;" +
+			"-fx-cursor: hand;"
+			);
+			
+			// --- Hover Effect ---
+			card.setOnMouseEntered(e ->
+			card.setStyle(
+			"-fx-background-color: #3a3a6e;" +
+			"-fx-background-radius: 20;" +
+			"-fx-border-color: " + accentColor + ";" +
+			"-fx-border-width: 3;" +
+			"-fx-border-radius: 20;" +
+			"-fx-cursor: hand;"
+			)
+			);
+			card.setOnMouseExited(e ->
+			card.setStyle(
+			"-fx-background-color: #2a2a4e;" +
+			"-fx-background-radius: 20;" +
+			"-fx-border-color: " + accentColor + ";" +
+			"-fx-border-width: 2;" +
+			"-fx-border-radius: 20;" +
+			"-fx-cursor: hand;"
+			)
+			);
+
+return card;
+}
 
     public void Game(Stage stage) {
-        try {
+    	//i commented them because in showTeamSelect it calls the stage of game -nour 
+        /*try {
             this.game = new Game(Role.LAUGHER); // need to be changed when player chooses team
             controller = new GameController(this.game, this);
             } 
         catch (IOException e) {
             System.out.println("Failed to load game data");
             return;
-        }
+        }*/
 
         GridPane board = new GridPane();
         board.setAlignment(Pos.CENTER);
@@ -144,6 +290,173 @@ public class Main extends Application {
         stage.setScene(new Scene(root));
         stage.setMaximized(true);
     }
+    private String getTypeOfMonster(Monster monster){
+    	String result = (monster instanceof Dasher)?"Dasher":(monster instanceof Dynamo)?"Dynamo":(monster instanceof MultiTasker)?"MultiTasker":(monster instanceof Schemer)?"Schemer":"Unknown";
+    	return result;
+    	
+    }
+    private void showErrorAlert(String message) {
+        Stage errorStage = new Stage();
+        Label msg = new Label(message);
+        msg.setWrapText(true);
+        msg.setStyle("-fx-text-fill: white; -fx-font-size: 14;");
+        Button ok = new Button("OK");
+        ok.setOnAction(e -> errorStage.close());
+        VBox box = new VBox(20, msg, ok);
+        box.setAlignment(Pos.CENTER);
+        box.setPadding(new Insets(30));
+        box.setStyle("-fx-background-color: #1a1a2e;");
+        errorStage.setScene(new Scene(box, 400, 200));
+        errorStage.setTitle("Error");
+        errorStage.show(); }
+
+    private VBox buildMonsterCard(Monster monster, String label,
+            String bgColor, String accentColor) {
+			// --- YOU / OPPONENT label ---
+			Label playerLabel = new Label(label);
+			playerLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+			playerLabel.setStyle(
+			"-fx-text-fill: white;" +
+			"-fx-background-color: " + accentColor + ";" +
+			"-fx-padding: 4 16 4 16;" +
+			"-fx-background-radius: 12;"
+			);
+			
+			// getting the image of the monster
+			String imagePath = getMonsterImagePath(monster.getName());
+			ImageView monsterImage = new ImageView(
+			new Image(getClass().getResourceAsStream(imagePath))
+			);
+			monsterImage.setFitWidth(180);
+			monsterImage.setFitHeight(130);
+			monsterImage.setPreserveRatio(true);
+			
+			// getting the name of the monster 
+			Label nameLabel = new Label(monster.getName());
+			nameLabel.setFont(Font.font("Arial", FontWeight.BOLD, 22));
+			nameLabel.setStyle("-fx-text-fill: " + accentColor + ";");
+			
+			// getting the type of the monster 
+			Label typeLabel = new Label("Type: " + getTypeOfMonster(monster));
+			typeLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+			typeLabel.setStyle("-fx-text-fill: #eeeeee;");
+			
+			// getting the role of the monster 
+			Label roleLabel = new Label("Role: " + monster.getOriginalRole().toString());
+			roleLabel.setFont(Font.font("Arial", 13));
+			roleLabel.setStyle("-fx-text-fill: #cccccc;");
+			
+			// getting the energy of the monster 
+			Label energyLabel = new Label("⚡ Starting Energy: " + monster.getEnergy());
+			energyLabel.setFont(Font.font("Arial", FontWeight.BOLD, 13));
+			energyLabel.setStyle("-fx-text-fill: #ffcc00;");
+			
+			Separator sep = new Separator();
+			
+			// the description 
+			Label descTitle = new Label("Special Ability:");
+			descTitle.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+			descTitle.setStyle("-fx-text-fill: " + accentColor + ";");
+			
+			Label descLabel = new Label(monster.getDescription());
+			descLabel.setFont(Font.font("Arial", 12));
+			descLabel.setStyle("-fx-text-fill: #dddddd;");
+			descLabel.setWrapText(true);
+			descLabel.setMaxWidth(230);
+			descLabel.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+			
+			// --- Assemble Card ---
+			VBox card = new VBox(10,
+			playerLabel, monsterImage, nameLabel,
+			typeLabel, roleLabel, energyLabel,
+			sep, descTitle, descLabel
+			);
+			card.setAlignment(Pos.CENTER);
+			card.setPadding(new Insets(25));
+			card.setPrefWidth(280);
+			card.setStyle(
+			"-fx-background-color: " + bgColor + ";" +
+			"-fx-background-radius: 20;" +
+			"-fx-border-color: " + accentColor + ";" +
+			"-fx-border-width: 2;" +
+			"-fx-border-radius: 20;"
+			);
+			return card;
+}
+    private String getMonsterImagePath(String name) {
+        switch (name) {
+            case "James P. Sullivan":   return "/james_sullivan.png";
+            case "Mike Wazowski":       return "/mike_wazowski.png";
+            case "Randall Boggs":       return "/Randall Boggs.jpg";
+            case "Celia Mae":           return "/celia_mae.jpg";
+            case "Roz":                 return "/roz.jpg";
+            case "Fungus":              return "/fungus.png";
+            case "Henry J. Waternoose": return "/waternoose.png";
+            case "Yeti":                return "/yeti.png";
+            default:                    return "/green guy.jpeg"; // fallback
+        }
+    }
+    public void showMonsterRevealScreen(Stage stage) {
+        stage.setTitle("Door Dash – Your Monster");
+     
+        Monster player = controller.getPlayer();
+        Monster opponent = controller.getOpponent();
+     
+        // ---------- Title ----------
+        Label title = new Label("THE COMPETITORS");
+        title.setFont(Font.font("Arial", FontWeight.BOLD, 38));
+        title.setStyle("-fx-text-fill: white;");
+     
+        Label subtitle = new Label("The Floor awaits. Only one monster will emerge victorious.");
+        subtitle.setFont(Font.font("Arial", 16));
+        subtitle.setStyle("-fx-text-fill: #aaaaaa;");
+     
+        // ---------- Monster Cards ----------
+        VBox playerCard   = buildMonsterCard(player,   "YOU",      "#1a3a5c", "#4fc3f7");
+        VBox opponentCard = buildMonsterCard(opponent,  "OPPONENT", "#3a1a1a", "#ff6b6b");
+     
+        Label vsLabel = new Label("VS");
+        vsLabel.setFont(Font.font("Arial", FontWeight.BOLD, 36));
+        vsLabel.setStyle("-fx-text-fill: #ffcc00;");
+     
+        HBox cardsRow = new HBox(40, playerCard, vsLabel, opponentCard);
+        cardsRow.setAlignment(Pos.CENTER);
+     
+        // ---------- Start Game Button ----------
+        Button startButton = new Button("▶  START GAME");
+        startButton.setFont(Font.font("Arial", FontWeight.BOLD, 22));
+        startButton.setStyle(
+            "-fx-background-color: #ff6600;" +
+            "-fx-text-fill: white;" +
+            "-fx-padding: 14 40 14 40;" +
+            "-fx-background-radius: 30;"
+        );
+        startButton.setOnAction(e -> Game(stage));
+     
+        // ---------- Back Button ----------
+        Button backButton = new Button("← Change Side");
+        backButton.setFont(Font.font("Arial", 14));
+        backButton.setStyle(
+            "-fx-background-color: transparent;" +
+            "-fx-text-fill: #aaaaaa;" +
+            "-fx-border-color: #aaaaaa;" +
+            "-fx-border-radius: 20;" +
+            "-fx-padding: 8 24 8 24;"
+        );
+        backButton.setOnAction(e -> showTeamSelectScreen(stage));
+     
+        // ---------- Root Layout ----------
+        VBox root = new VBox(28, title, subtitle, cardsRow, startButton, backButton);
+        root.setAlignment(Pos.CENTER);
+        root.setPadding(new Insets(50));
+        root.setStyle("-fx-background-color: #1a1a2e;");
+     
+        stage.setScene(new Scene(root));
+        stage.setMaximized(true);
+    }
+
+    
+    
 
 
     
