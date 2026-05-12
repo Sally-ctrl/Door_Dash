@@ -32,23 +32,23 @@ public class Main extends Application {
         title.setStyle("-fx-text-fill: #140a04;");
 
         Label description = new Label(
-    "The goal:\n" +
-    "Be the first monster to reach cell 99 (Booâ€™s Door) with at least 1000 energy\n\n" +
-    "How to Win\n" +
-    "You win if you:\n" +
-    "Reach cell 99, AND\n" +
-    "Have 1000 or more energy\n\n" +
-    "On Your Turn:\n\n" +
-    "(Optional) Use your monster powerup (costs 500 energy if used manually).\n\n" +
-    "Roll a 6-sided dice (1â€“6).\n" +
-    "Move forward that number of cells.\n" +
-    "Apply the effect of the cell you land on:\n" +
-    "- Doors â†’ gain or lose energy for your whole team\n" +
-    "- Cards â†’ draw a random card effect\n" +
-    "- Monster cells â†’ trigger special monster interactions\n" +
-    "- Conveyor/Socks â†’ move forward/backward with effects\n" +
-    "- Normal cell â†’ nothing happens\n\n" +
-    "If you land on the opponentâ€™s cell â†’ your move is cancelled and you retry."
+            "The goal:\n" +
+            "Be the first monster to reach cell 99 (Boo's Door) with at least 1000 energy\n\n" +
+            "How to Win\n" +
+            "You win if you:\n" +
+            "Reach cell 99, AND\n" +
+            "Have 1000 or more energy\n\n" +
+            "On Your Turn:\n\n" +
+            "(Optional) Use your monster powerup (costs 500 energy if used manually).\n\n" +
+            "Roll a 6-sided dice (1-6).\n" +
+            "Move forward that number of cells.\n" +
+            "Apply the effect of the cell you land on:\n" +
+            "- Doors -> gain or lose energy for your whole team\n" +
+            "- Cards -> draw a random card effect\n" +
+            "- Monster cells -> trigger special monster interactions\n" +
+            "- Conveyor/Socks -> move forward/backward with effects\n" +
+            "- Normal cell -> nothing happens\n\n" +
+            "If you land on the opponent's cell -> your move is cancelled and you retry."
         );
         description.setWrapText(true);
         description.setFont(Font.font("Arial", 16));
@@ -58,13 +58,19 @@ public class Main extends Application {
         root.setPadding(new Insets(60));
         root.setStyle("-fx-background-color: #bb69e1;");
 
-        Button playButton = new Button("â–¶  PLAY");
+        Button playButton = new Button("PLAY");
         playButton.setFont(Font.font("Arial", FontWeight.BOLD, 22));
         playButton.setStyle("-fx-background-color: #ff6600; -fx-text-fill: white; -fx-padding: 14 40 14 40; -fx-background-radius: 30;");
         
         //changed this to e -> showTeam bc from showTeam it will go to game stage 
-        playButton.setOnAction(e ->  showTeamSelectScreen(stage));
-        
+        playButton.setOnAction(e -> {
+            try {
+                showTeamSelectScreen(stage);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                showErrorAlert("Error: " + ex.getMessage());
+            }
+        });
         root.getChildren().addAll(title,description,playButton);
 
         ScrollPane scrollPane = new ScrollPane(root);
@@ -88,7 +94,7 @@ public class Main extends Application {
         // ---------- SCARER Card (Sully - blue guy) ----------
         VBox scarerCard = buildRoleCard(
             "SCARER",
-            "/blue guy.jpeg",
+            "/game/images/blue_guy.jpeg",
             "Harness the power of screams!\nTerrorize children for energy.\nBring fear to the Floor.",
             "#ff4444"  // red accent
         );
@@ -96,7 +102,7 @@ public class Main extends Application {
         // ---------- LAUGHER Card (Mike - green guy) ----------
         VBox laugherCard = buildRoleCard(
             "LAUGHER",
-            "/green guy.jpeg",
+            "/game/images/green_guy.jpeg",
             "Revolutionize with laughter!\nLaughter produces 10x more energy.\nBring joy to the Floor.",
             "#44ff44"  // green accent
         );
@@ -108,7 +114,8 @@ public class Main extends Application {
                // this.controller = new GameController(this.game, this);
                 //showMonsterRevealScreen(stage);#
             	controller.selectRole(Role.SCARER, stage);
-            } catch (IOException ex) {
+            } catch (Exception ex) {
+                ex.printStackTrace();
                 showErrorAlert("Failed to load game data: " + ex.getMessage());
             }
         });
@@ -118,8 +125,9 @@ public class Main extends Application {
                 //this.game = new Game(Role.LAUGHER);
                 //this.controller = new GameController(this.game, this);
                 //showMonsterRevealScreen(stage);
-            	controller.selectRole(Role.SCARER, stage);
-            } catch (IOException ex) {
+            	controller.selectRole(Role.LAUGHER, stage);
+            } catch (Exception ex) {
+                ex.printStackTrace();
                 showErrorAlert("Failed to load game data: " + ex.getMessage());
             }
         });
@@ -286,6 +294,16 @@ return card;
         boardWithOverlay.getChildren().addAll(board, overlay);
         root.setCenter(boardWithOverlay);
         controller.loadBoard(board,cellSize);
+        
+        stage.widthProperty().addListener((obs, oldVal, newVal) -> {
+                overlay.getChildren().clear();
+                controller.drawTransports(overlay, board);
+                });
+                stage.heightProperty().addListener((obs, oldVal, newVal) -> {
+                    overlay.getChildren().clear();
+                    controller.drawTransports(overlay, board);
+                });
+
         controller.drawTransports(overlay, board);
         stage.setScene(new Scene(root));
         stage.setMaximized(true);
@@ -384,18 +402,16 @@ return card;
 			return card;
 }
     private String getMonsterImagePath(String name) {
-        switch (name) {
-            case "James P. Sullivan":   return "/james_sullivan.png";
-            case "Mike Wazowski":       return "/mike_wazowski.png";
-            case "Randall Boggs":       return "/Randall Boggs.jpg";
-            case "Celia Mae":           return "/celia_mae.jpg";
-            case "Roz":                 return "/roz.jpg";
-            case "Fungus":              return "/fungus.png";
-            case "Henry J. Waternoose": return "/waternoose.png";
-            case "Yeti":                return "/yeti.png";
-            default:                    return "/green guy.jpeg"; // fallback
-        }
+    switch (name) {
+        case "James P. Sullivan":   return "/game/images/james_sullivanID.png";
+        case "Mike Wazowski":       return "/game/images/mike_wazowskiID.png";
+        case "Randall Boggs":       return "/game/images/Randall_BoggsID.jpg";
+        case "Celia Mae":           return "/game/images/celia_maeID.png";
+        case "Fungus":              return "/game/images/fungus2.png";
+        case "Yeti":                return "/game/images/yetiID.png";
+        default:                    return "/game/images/green_guy.jpeg";
     }
+}
     public void showMonsterRevealScreen(Stage stage) {
         stage.setTitle("Door Dash – Your Monster");
      

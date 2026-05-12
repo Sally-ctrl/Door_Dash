@@ -162,7 +162,7 @@ public void drawLadder(Pane overlay, GridPane board, int fromIndex, int toIndex)
         Bounds toBounds = toNode.localToScene(toNode.getBoundsInLocal());
         Bounds overlayBounds = overlay.localToScene(overlay.getBoundsInLocal());
 
-       /* double fromX = fromBounds.getCenterX() - overlayBounds.getMinX();
+       /*double fromX = fromBounds.getCenterX() - overlayBounds.getMinX();
         double fromY = fromBounds.getCenterY() - overlayBounds.getMinY();
         double toX = toBounds.getCenterX() - overlayBounds.getMinX();
         double toY = toBounds.getCenterY() - overlayBounds.getMinY();*/
@@ -255,16 +255,14 @@ public void drawDoorLine(Pane overlay, GridPane board, int fromIndex, int toInde
         double doorWidth = 14;
         double doorHeight = 20;
 
-        // â†“ array of door images to pick from randomly
+        
         String[] doorImages = {
             "/game/images/doorhanging.jpeg",
             "/game/images/doorhanging2.png",
             "/game/images/doorhanging3.png"
             
         };
-        Random random = new Random();                                   // â†� random picker
-
-        // â†“ old single image line removed, now picked inside loop
+        Random random = new Random();                                  
         for (int d = 0; d <= numDoors; d++) {
             double t = (double) d / numDoors;
             double hangX = fromX + t * (toX - fromX);
@@ -295,6 +293,8 @@ public void drawDoorLine(Pane overlay, GridPane board, int fromIndex, int toInde
         }
     });
 }
+
+
 	public void selectRole(Role role, Stage stage) throws IOException {
 	    this.game = new Game(role);
 	    mainView.showMonsterRevealScreen(stage);
