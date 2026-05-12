@@ -75,6 +75,7 @@ public class Main extends Application {
 
         ScrollPane scrollPane = new ScrollPane(root);
         scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
         scrollPane.setStyle("-fx-background: #bb69e1; -fx-background-color: #1a1a2e;");
         root.prefWidthProperty().bind(scrollPane.widthProperty());
 
@@ -156,6 +157,7 @@ public class Main extends Application {
      
         stage.setScene(new Scene(root));
         stage.setMaximized(true);
+        stage.centerOnScreen();
         
 
     }
@@ -307,6 +309,7 @@ return card;
         controller.drawTransports(overlay, board);
         stage.setScene(new Scene(root));
         stage.setMaximized(true);
+        stage.centerOnScreen();
     }
     private String getTypeOfMonster(Monster monster){
     	String result = (monster instanceof Dasher)?"Dasher":(monster instanceof Dynamo)?"Dynamo":(monster instanceof MultiTasker)?"MultiTasker":(monster instanceof Schemer)?"Schemer":"Unknown";
@@ -469,6 +472,7 @@ return card;
      
         stage.setScene(new Scene(root));
         stage.setMaximized(true);
+        stage.centerOnScreen();
     }
 
     
