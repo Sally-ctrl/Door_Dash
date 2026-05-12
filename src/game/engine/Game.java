@@ -16,6 +16,7 @@ public class Game {
 	private Monster player;
 	private Monster opponent;
 	private Monster current;
+	private int lastRoll;
 	
 	public Game(Role playerRole) throws IOException {
 		this.allMonsters = DataLoader.readMonsters();
@@ -29,6 +30,9 @@ public class Game {
 		Board.setStationedMonsters(allMonsters);
 	    board.initializeBoard(DataLoader.readCells());
 	}
+	public int getLastRoll() {
+    return lastRoll;
+}
 	
 	public Board getBoard() {
 		return board;
@@ -85,6 +89,7 @@ public class Game {
 			return;
 		}
 		int roll = rollDice();
+		this.lastRoll = roll; // ADD THIS
 		board.moveMonster(current, roll, getCurrentOpponent());
 		switchTurn();
 	}

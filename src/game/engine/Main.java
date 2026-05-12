@@ -1,7 +1,16 @@
 package game.engine;
+import game.engine.cards.Card;
+import game.engine.cards.ConfusionCard;
+import game.engine.cards.EnergyStealCard;
+import game.engine.cards.ShieldCard;
+import game.engine.cards.StartOverCard;
+import game.engine.cards.SwapperCard;
 import game.engine.monsters.*;
 import javafx.scene.image.*;
 import java.io.IOException;
+import javafx.animation.*;
+import javafx.util.Duration;
+import javafx.stage.Modality;
 
 import javafx.application.*;
 import javafx.geometry.*;
@@ -17,7 +26,10 @@ public class Main extends Application {
     private Game game;
     public void start(Stage stage){
     	//i updated the constructor of game controller as well to create the game controller as soon as the view is launched 
-    	this.controller = new GameController(this);
+            System.err.println("Running from: " + new java.io.File("").getAbsolutePath());
+    System.err.println("Cards exists: " + new java.io.File("cards.csv").exists());
+    System.err.println("Monsters exists: " + new java.io.File("monsters.csv").exists());
+        this.controller = new GameController(this);
         stage.setMinHeight(700);
         stage.setMinWidth(1000);
         stage.setMaximized(true);
@@ -245,10 +257,177 @@ return card;
         board.setAlignment(Pos.CENTER);
         board.setGridLinesVisible(false);
 
-        HBox top = new HBox();
-        top.setPrefHeight(120);
-        top.setStyle("-fx-background-color: #2a2a4e;");
+                // ============================================================
+        //  TOP PANEL — drop this into Main.java inside the Game() method
+        //  Replace:   HBox top = new HBox();
+        //             top.setPrefHeight(120);
+        //             top.setStyle("-fx-background-color: #2a2a4e;");
+        //  With everything below up to the closing comment
+        // ============================================================
 
+        // ---------- Dice ImageView (starts blank, updates after roll) ----------
+        ImageView diceImageView = new ImageView();
+        diceImageView.setFitWidth(64);
+        diceImageView.setFitHeight(64);
+        diceImageView.setPreserveRatio(true);
+        // store on controller so it can update it after rolling
+        controller.setDiceImageView(diceImageView);
+
+        // ---------- Current Turn Label ----------
+        Label turnLabel = new Label("Current Turn:");
+        turnLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 13));
+        turnLabel.setStyle("-fx-text-fill: #aaaaaa;");
+
+        Label currentMonsterLabel = new Label(controller.getCurrentMonster().getName());
+        currentMonsterLabel.setFont(Font.font("Arial", FontWeight.BOLD, 20));
+        currentMonsterLabel.setStyle("-fx-text-fill: white;");
+        // store on controller so it can update after each turn
+        controller.setCurrentMonsterLabel(currentMonsterLabel);
+
+        VBox turnInfo = new VBox(2, turnLabel, currentMonsterLabel);
+        turnInfo.setAlignment(Pos.CENTER_LEFT);
+
+        // ---------- Roll Dice Button ----------
+        Button rollButton = new Button("🎲  ROLL DICE");
+        rollButton.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        rollButton.setStyle(
+            "-fx-background-color: #ff6600;" +
+            "-fx-text-fill: white;" +
+            "-fx-padding: 12 28 12 28;" +
+            "-fx-background-radius: 24;" +
+            "-fx-cursor: hand;"
+        );
+        rollButton.setOnMouseEntered(e -> rollButton.setStyle(
+            "-fx-background-color: #ff8833;" +
+            "-fx-text-fill: white;" +
+            "-fx-padding: 12 28 12 28;" +
+            "-fx-background-radius: 24;" +
+            "-fx-cursor: hand;"
+        ));
+        rollButton.setOnMouseExited(e -> rollButton.setStyle(
+            "-fx-background-color: #ff6600;" +
+            "-fx-text-fill: white;" +
+            "-fx-padding: 12 28 12 28;" +
+            "-fx-background-radius: 24;" +
+            "-fx-cursor: hand;"
+        ));
+        rollButton.setOnAction(e -> {
+    try {
+        controller.playTurn();
+        int roll = controller.getLastRoll();
+
+        // disable button during animation so player can't spam it
+        rollButton.setDisable(true);
+
+        Timeline diceAnimation = new Timeline();
+        KeyFrame kf = new KeyFrame(Duration.millis(80), ev -> {
+            int randomFace = (int)(Math.random() * 6) + 1;
+            diceImageView.setImage(new Image(
+                getClass().getResourceAsStream("/game/images/dice" + randomFace + ".png")
+            ));
+        });
+        diceAnimation.getKeyFrames().add(kf);
+        diceAnimation.setCycleCount(15);
+
+        diceAnimation.setOnFinished(ev -> {
+            // land on the real result
+            diceImageView.setImage(new Image(
+                getClass().getResourceAsStream("/game/images/dice" + roll + ".png")
+            ));
+            currentMonsterLabel.setText(controller.getCurrentMonster().getName());
+             Card drawnCard = controller.getLastCardDrawn();
+            if (drawnCard != null) {
+            showCardDrawnPopup(drawnCard);
+             controller.clearLastCardDrawn();
+            }
+
+
+            rollButton.setDisable(false); // re-enable after animation
+        });
+
+        diceAnimation.play();
+
+    } catch (Exception ex) {
+        showErrorAlert(ex.getMessage());
+    }
+});
+
+       // ---------- Powerup Box ----------
+Label powerupTitle = new Label("POWER UP");
+powerupTitle.setFont(Font.font("Arial", FontWeight.BOLD, 13));
+powerupTitle.setStyle("-fx-text-fill: #1a1a2e;");  // dark text on gold bg
+
+Button powerupButton = new Button("-500 ⚡");
+powerupButton.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+powerupButton.setStyle(
+    "-fx-background-color: #1a1a2e;" +   // dark button inside gold box
+    "-fx-text-fill: #ffcc00;" +
+    "-fx-padding: 8 20 8 20;" +
+    "-fx-background-radius: 6;" +
+    "-fx-cursor: hand;"
+);
+powerupButton.setOnMouseEntered(e -> powerupButton.setStyle(
+    "-fx-background-color: #2a2a4e;" +
+    "-fx-text-fill: #ffcc00;" +
+    "-fx-padding: 8 20 8 20;" +
+    "-fx-background-radius: 6;" +
+    "-fx-cursor: hand;"
+));
+powerupButton.setOnMouseExited(e -> powerupButton.setStyle(
+    "-fx-background-color: #1a1a2e;" +
+    "-fx-text-fill: #ffcc00;" +
+    "-fx-padding: 8 20 8 20;" +
+    "-fx-background-radius: 6;" +
+    "-fx-cursor: hand;"
+));
+powerupButton.setOnAction(e -> {
+    try {
+        controller.usePowerup();
+        showInfoAlert("Powerup activated for " + controller.getCurrentMonster().getName() + "!");
+    } catch (Exception ex) {
+        showErrorAlert(ex.getMessage());
+    }
+});
+
+VBox powerupBox = new VBox(6, powerupTitle, powerupButton);
+powerupBox.setAlignment(Pos.CENTER);
+powerupBox.setPadding(new Insets(10, 16, 10, 16));
+powerupBox.setStyle(
+    "-fx-background-color: #ffcc00;" +   // fully filled gold
+    "-fx-border-color: #ffd700;" +
+    "-fx-border-width: 2;" +
+    "-fx-border-radius: 10;" +
+    "-fx-background-radius: 10;"
+);
+
+        // ---------- Assemble Top Panel ----------
+        HBox top = new HBox(30);
+        top.setAlignment(Pos.CENTER_LEFT);
+        top.setPadding(new Insets(0, 30, 0, 30));
+        top.setPrefHeight(100);
+        top.setStyle("-fx-background-color: #3d3d6b; -fx-border-color: #4a4a80; -fx-border-width: 0 0 2 0;");
+
+        // left: turn info
+        HBox leftSection = new HBox(16, turnInfo);
+        leftSection.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(leftSection, Priority.ALWAYS);
+
+        // center: roll + dice image
+        HBox centerSection = new HBox(16, rollButton, diceImageView);
+        centerSection.setAlignment(Pos.CENTER);
+        HBox.setHgrow(centerSection, Priority.ALWAYS);
+
+        // right: powerup
+        HBox rightSection = new HBox(powerupBox);
+        rightSection.setAlignment(Pos.CENTER_RIGHT);
+        rightSection.setPadding(new Insets(0, 20, 0, 0));  // 20px breathing room from edge
+        HBox.setHgrow(rightSection, Priority.ALWAYS);
+
+        top.getChildren().addAll(leftSection, centerSection, rightSection);
+
+        // ============================================================
+        //  END OF TOP PANEL
+        // ============================================================
         HBox bottom = new HBox();
         bottom.setPrefHeight(120);
         bottom.setStyle("-fx-background-color: #2a2a4e;");
@@ -404,12 +583,13 @@ return card;
 			);
 			return card;
 }
-    private String getMonsterImagePath(String name) {
+//im testing
+private String getMonsterImagePath(String name) {
     switch (name) {
         case "James P. Sullivan":   return "/game/images/james_sullivanID.png";
         case "Mike Wazowski":       return "/game/images/mike_wazowskiID.png";
         case "Randall Boggs":       return "/game/images/Randall_BoggsID.jpg";
-        case "Celia Mae":           return "/game/images/celia_maeID.png";
+        case "Celia Mae":           return "/game/images/celia_maeID.jpg";  // ← jpg not png!
         case "Fungus":              return "/game/images/fungus2.png";
         case "Yeti":                return "/game/images/yetiID.png";
         default:                    return "/game/images/green_guy.jpeg";
@@ -474,6 +654,118 @@ return card;
         stage.setMaximized(true);
         stage.centerOnScreen();
     }
+    // ============================================================
+//  Add this helper to Main.java alongside showErrorAlert()
+// ============================================================
+
+private void showInfoAlert(String message) {
+    Stage infoStage = new Stage();
+    Label msg = new Label(message);
+    msg.setWrapText(true);
+    msg.setStyle("-fx-text-fill: white; -fx-font-size: 14;");
+    Button ok = new Button("OK");
+    ok.setOnAction(e -> infoStage.close());
+    VBox box = new VBox(20, msg, ok);
+    box.setAlignment(Pos.CENTER);
+    box.setPadding(new Insets(30));
+    box.setStyle("-fx-background-color: #1a1a2e;");
+    infoStage.setScene(new Scene(box, 400, 200));
+    infoStage.setTitle("Info");
+    infoStage.show();
+}
+
+// ============================================================
+//  Also add this stub to Main.java — you'll flesh it out later
+// ============================================================
+public void showWinScreen(Stage stage, Monster winner) {
+    //will implement it later 
+}
+public void showCardDrawnPopup(Card card) {
+    Stage popup = new Stage();
+    popup.initModality(Modality.APPLICATION_MODAL); // blocks game until dismissed
+
+    // --- Icon ---
+    String iconPath = getCardIconPath(card);
+    ImageView icon = new ImageView(
+        new Image(getClass().getResourceAsStream(iconPath))
+    );
+    icon.setFitWidth(80);
+    icon.setFitHeight(80);
+    icon.setPreserveRatio(true);
+
+    // --- Card Drawn header ---
+    Label header = new Label("🃏  CARD DRAWN");
+    header.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+    header.setStyle("-fx-text-fill: #aaaaaa;");
+
+    // --- Card Name ---
+    Label nameLabel = new Label(card.getName());
+    nameLabel.setFont(Font.font("Arial", FontWeight.BOLD, 26));
+    nameLabel.setStyle("-fx-text-fill: #ffcc00;");
+    nameLabel.setWrapText(true);
+    nameLabel.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+
+    // --- Effect ---
+    Label effectLabel = new Label(card.getDescription());
+    effectLabel.setFont(Font.font("Arial", 15));
+    effectLabel.setStyle("-fx-text-fill: #dddddd;");
+    effectLabel.setWrapText(true);
+    effectLabel.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+    effectLabel.setMaxWidth(260);
+
+    // --- Lucky/Unlucky badge ---
+    Label luckyLabel = new Label(card.isLucky() ? "✨ Lucky!" : "💀 Unlucky!");
+    luckyLabel.setFont(Font.font("Arial", FontWeight.BOLD, 13));
+    luckyLabel.setStyle(card.isLucky()
+        ? "-fx-text-fill: #44ff88; -fx-background-color: #1a3a2a; -fx-padding: 4 12 4 12; -fx-background-radius: 10;"
+        : "-fx-text-fill: #ff4444; -fx-background-color: #3a1a1a; -fx-padding: 4 12 4 12; -fx-background-radius: 10;"
+    );
+
+    // --- Continue Button ---
+    Button continueBtn = new Button("CONTINUE  ▶");
+    continueBtn.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+    continueBtn.setStyle(
+        "-fx-background-color: #ff6600;" +
+        "-fx-text-fill: white;" +
+        "-fx-padding: 10 28 10 28;" +
+        "-fx-background-radius: 20;" +
+        "-fx-cursor: hand;"
+    );
+    continueBtn.setOnAction(e -> popup.close());
+
+    // --- Assemble ---
+    VBox content = new VBox(14, header, icon, nameLabel, effectLabel, luckyLabel, continueBtn);
+    content.setAlignment(Pos.CENTER);
+    content.setPadding(new Insets(36, 40, 36, 40));
+    content.setStyle(
+        "-fx-background-color: #2a2a4e;" +
+        "-fx-border-color: #ffcc00;" +
+        "-fx-border-width: 3;" +
+        "-fx-border-radius: 20;" +
+        "-fx-background-radius: 20;"
+    );
+
+    popup.setScene(new Scene(content, 340, 420));
+    popup.setTitle("Card Drawn");
+
+    // slide-up animation
+    content.setTranslateY(300);
+    popup.show();
+    Timeline slideUp = new Timeline(
+        new KeyFrame(Duration.millis(300),
+            new KeyValue(content.translateYProperty(), 0,
+                javafx.animation.Interpolator.EASE_OUT))
+    );
+    slideUp.play();
+}
+private String getCardIconPath(Card card) {
+    if (card instanceof SwapperCard)    return "/game/images/position_swap.png";
+    if (card instanceof ShieldCard)     return "/game/images/sheild_icon.png";
+    if (card instanceof EnergyStealCard) return "/game/images/small_thief.png";
+    if (card instanceof StartOverCard)  return "/game/images/square_one.png";
+    if (card instanceof ConfusionCard)  return "/game/images/confused_icon.png";
+    return null;
+}
 
     
     

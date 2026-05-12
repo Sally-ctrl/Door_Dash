@@ -3,6 +3,12 @@ package game.engine;
 import java.io.IOException;
 import java.util.Random;
 
+import game.engine.cards.Card;
+import game.engine.cards.ConfusionCard;
+import game.engine.cards.EnergyStealCard;
+import game.engine.cards.ShieldCard;
+import game.engine.cards.StartOverCard;
+import game.engine.cards.SwapperCard;
 import game.engine.cells.CardCell;
 import game.engine.cells.Cell;
 import game.engine.cells.ContaminationSock;
@@ -27,6 +33,8 @@ public class GameController {
     private Game game;
     private Main mainView;
     private int doorcount=0;
+    private Label currentMonsterLabel;
+    private ImageView diceImageView;
 
     /*public GameController (Game game ,Main mainView){
         this.game = game;
@@ -307,4 +315,49 @@ public void drawDoorLine(Pane overlay, GridPane board, int fromIndex, int toInde
 	public Monster getOpponent() {
 	    return game.getOpponent();
 	}
+    // plays one full turn (rolls dice + moves)
+public void playTurn() throws Exception {
+    game.playTurn();
+}
+
+// activates powerup for current monster
+public void usePowerup() throws Exception {
+    game.usePowerup();
+}
+
+// gets current monster playing
+public Monster getCurrentMonster() {
+    return game.getCurrent();
+}
+
+// checks if someone won
+public Monster getWinner() {
+    return game.getWinner();
+}
+
+// gets last dice roll (we need to add this to Game.java too)
+public int getLastRoll() {
+    return game.getLastRoll();
+}
+// ============================================================
+//  Add these to GameController.java
+// ============================================================
+
+// ---------- New fields (add near top with other fields) ----------
+
+
+// ---------- New setters ----------
+public void setCurrentMonsterLabel(Label label) {
+    this.currentMonsterLabel = label;
+}
+
+public void setDiceImageView(ImageView imageView) {
+    this.diceImageView = imageView;
+}
+public Card getLastCardDrawn() {
+    return Board.getLastCardDrawn();
+}
+
+
+public void clearLastCardDrawn() { Board.clearLastCardDrawn(); }
 }

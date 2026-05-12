@@ -10,11 +10,13 @@ import game.engine.cards.*;
 import game.engine.dataloader.DataLoader;
 import game.engine.exceptions.InvalidMoveException;
 
+
 public class Board {
 	private Cell[][] boardCells;
 	private static ArrayList<Monster> stationedMonsters; 
 	private static ArrayList<Card> originalCards;
 	public static ArrayList<Card> cards;
+	private static Card lastCardDrawn;
 	
 	public Board(ArrayList<Card> readCards) {
 		this.boardCells = new Cell[Constants.BOARD_ROWS][Constants.BOARD_COLS];
@@ -190,11 +192,16 @@ public class Board {
 		 opponentCell.setMonster(opponent);
 
 	 }
+	
+	 public static Card getLastCardDrawn() { return lastCardDrawn; } //need this in the controller
+	 public static void clearLastCardDrawn() { lastCardDrawn = null; } //same thing 
+
 	 public static Card drawCard(){
 		 if(cards.isEmpty()){
 			 Board.reloadCards();
 		 }
 		 Card card = cards.get(0);
+		 lastCardDrawn = card;//need this in the game controller
 		 cards.remove(0);
 		 return card;
 	 }

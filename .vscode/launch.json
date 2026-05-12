@@ -1,13 +1,12 @@
 {
   "version": "0.2.0",
   "configurations": [
-    
     {
       "type": "java",
       "name": "Run JavaFX",
       "request": "launch",
       "mainClass": "game.engine.Main",
-      "vmArgs": "--module-path \"C:/Users/sarah/OneDrive/Desktop/GameProject/javafx-sdk-21.0.11/lib\" --add-modules javafx.controls,javafx.fxml"
+      "vmArgs": "--module-path \"C:\\JavaLibraries\\javafx-sdk-21.0.11\\lib\" --add-modules javafx.controls,javafx.fxml"
     }
   ]
 }

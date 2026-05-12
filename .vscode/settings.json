@@ -24,7 +24,25 @@
             "c:\\Users\\sarah\\OneDrive\\Desktop\\GameProject\\javafx-sdk-21.0.11\\lib\\javafx.media.jar",
             "c:\\Users\\sarah\\OneDrive\\Desktop\\GameProject\\javafx-sdk-21.0.11\\lib\\javafx.swing.jar",
             "c:\\Users\\sarah\\OneDrive\\Desktop\\GameProject\\javafx-sdk-21.0.11\\lib\\javafx.web.jar",
-            "c:\\Users\\sarah\\OneDrive\\Desktop\\GameProject\\javafx-sdk-21.0.11\\lib\\javafx-swt.jar"
+            "c:\\Users\\sarah\\OneDrive\\Desktop\\GameProject\\javafx-sdk-21.0.11\\lib\\javafx-swt.jar",
+            "c:\\JavaLibraries\\javafx-sdk-21.0.11\\lib\\javafx.base.jar",
+            "c:\\JavaLibraries\\javafx-sdk-21.0.11\\lib\\javafx.controls.jar",
+            "c:\\JavaLibraries\\javafx-sdk-21.0.11\\lib\\javafx.fxml.jar",
+            "c:\\JavaLibraries\\javafx-sdk-21.0.11\\lib\\javafx.graphics.jar",
+            "c:\\JavaLibraries\\javafx-sdk-21.0.11\\lib\\javafx.media.jar",
+            "c:\\JavaLibraries\\javafx-sdk-21.0.11\\lib\\javafx.swing.jar",
+            "c:\\JavaLibraries\\javafx-sdk-21.0.11\\lib\\javafx.web.jar",
+            "c:\\JavaLibraries\\javafx-sdk-21.0.11\\lib\\javafx-swt.jar"
+        ],
+        "exclude": [
+            "c:\\Users\\nourn\\OneDrive\\Documents\\Projects\\javafx-sdk-21.0.11\\javafx-sdk-21.0.11\\javafx-sdk-21.0.11\\lib\\javafx-swt.jar",
+            "c:\\Users\\nourn\\OneDrive\\Documents\\Projects\\javafx-sdk-21.0.11\\javafx-sdk-21.0.11\\javafx-sdk-21.0.11\\lib\\javafx.base.jar",
+            "c:\\Users\\nourn\\OneDrive\\Documents\\Projects\\javafx-sdk-21.0.11\\javafx-sdk-21.0.11\\javafx-sdk-21.0.11\\lib\\javafx.controls.jar",
+            "c:\\Users\\nourn\\OneDrive\\Documents\\Projects\\javafx-sdk-21.0.11\\javafx-sdk-21.0.11\\javafx-sdk-21.0.11\\lib\\javafx.fxml.jar",
+            "c:\\Users\\nourn\\OneDrive\\Documents\\Projects\\javafx-sdk-21.0.11\\javafx-sdk-21.0.11\\javafx-sdk-21.0.11\\lib\\javafx.graphics.jar",
+            "c:\\Users\\nourn\\OneDrive\\Documents\\Projects\\javafx-sdk-21.0.11\\javafx-sdk-21.0.11\\javafx-sdk-21.0.11\\lib\\javafx.swing.jar",
+            "c:\\Users\\nourn\\OneDrive\\Documents\\Projects\\javafx-sdk-21.0.11\\javafx-sdk-21.0.11\\javafx-sdk-21.0.11\\lib\\javafx.media.jar",
+            "c:\\Users\\nourn\\OneDrive\\Documents\\Projects\\javafx-sdk-21.0.11\\javafx-sdk-21.0.11\\javafx-sdk-21.0.11\\lib\\javafx.web.jar"
         ]
     }
 }
