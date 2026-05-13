@@ -10,8 +10,6 @@ import javafx.scene.image.*;
 import java.io.IOException;
 import javafx.animation.*;
 import javafx.util.Duration;
-import javafx.stage.Modality;
-
 import javafx.application.*;
 import javafx.geometry.*;
 import javafx.scene.*;
@@ -330,20 +328,32 @@ return card;
         diceAnimation.setCycleCount(15);
 
         diceAnimation.setOnFinished(ev -> {
-            // land on the real result
-            diceImageView.setImage(new Image(
-                getClass().getResourceAsStream("/game/images/dice" + roll + ".png")
-            ));
-            currentMonsterLabel.setText(controller.getCurrentMonster().getName());
-             Card drawnCard = controller.getLastCardDrawn();
-            if (drawnCard != null) {
+    try {
+
+        diceImageView.setImage(new Image(
+            getClass().getResourceAsStream("/game/images/dice" + roll + ".png")
+        ));
+
+        currentMonsterLabel.setText(
+            controller.getCurrentMonster().getName()
+        );
+
+        Card drawnCard = controller.getLastCardDrawn();
+
+        if (drawnCard != null) {
             showCardDrawnPopup(drawnCard);
-             controller.clearLastCardDrawn();
-            }
+            controller.clearLastCardDrawn();
+        }
 
+    } catch (Exception ex) {
 
-            rollButton.setDisable(false); // re-enable after animation
-        });
+        ex.printStackTrace();
+
+    } finally {
+
+        rollButton.setDisable(false);
+    }
+});
 
         diceAnimation.play();
 
@@ -351,6 +361,7 @@ return card;
         showErrorAlert(ex.getMessage());
     }
 });
+
 
        // ---------- Powerup Box ----------
 Label powerupTitle = new Label("POWER UP");
@@ -682,8 +693,8 @@ public void showWinScreen(Stage stage, Monster winner) {
 }
 public void showCardDrawnPopup(Card card) {
     Stage popup = new Stage();
-    popup.initModality(Modality.APPLICATION_MODAL); // blocks game until dismissed
-
+    //popup.initModality(Modality.APPLICATION_MODAL); // blocks game until dismissed
+    popup.initModality(Modality.NONE);
     // --- Icon ---
     String iconPath = getCardIconPath(card);
     ImageView icon = new ImageView(
@@ -751,6 +762,7 @@ public void showCardDrawnPopup(Card card) {
     // slide-up animation
     content.setTranslateY(300);
     popup.show();
+    popup.toFront();
     Timeline slideUp = new Timeline(
         new KeyFrame(Duration.millis(300),
             new KeyValue(content.translateYProperty(), 0,

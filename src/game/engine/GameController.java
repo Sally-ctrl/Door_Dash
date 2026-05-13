@@ -114,7 +114,7 @@ public class GameController {
             
         }
         else if (cell instanceof CardCell ){
-            return "/game/images/card.png";
+            return "/game/images/card_bezn_allah.png";
         }
         else if (cell instanceof ContaminationSock){
             return "/game/images/sock.png";
