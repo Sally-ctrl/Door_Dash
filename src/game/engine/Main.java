@@ -15,13 +15,16 @@ import javafx.geometry.*;
 import javafx.scene.*;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.scene.media.MediaPlayer;
 import javafx.scene.text.*;
 import javafx.stage.*;
 import javafx.beans.binding.*;
 
+
 public class Main extends Application {
     private GameController controller;
     private Game game;
+    private MediaPlayer currentMusic;
     public void start(Stage stage){
     	//i updated the constructor of game controller as well to create the game controller as soon as the view is launched 
             System.err.println("Running from: " + new java.io.File("").getAbsolutePath());
@@ -35,6 +38,7 @@ public class Main extends Application {
         stage.show();
     }
     public void WelcomeStage(Stage stage) {
+        playMusic("/game/audio/welcome.mp3");
         stage.setTitle("Door Dash: Scare vs Laugh Touchdown");
 
         Label title = new Label("Door Dash");
@@ -241,6 +245,7 @@ return card;
 }
 
     public void Game(Stage stage) {
+        playMusic("/game/audio/game.mp3");
     	//i commented them because in showTeamSelect it calls the stage of game -nour 
         /*try {
             this.game = new Game(Role.LAUGHER); // need to be changed when player chooses team
@@ -250,6 +255,13 @@ return card;
             System.out.println("Failed to load game data");
             return;
         }*/
+       // Player panel dynamic nodes
+        Label[] playerPanelRefs = new Label[6]; // [0]=energy, [1]=position, [2]=role, [3]=shield, [4]=confusion, [5]=momentum/focus/freeze
+        ProgressBar playerEnergyBar = new ProgressBar(0);
+        
+        // Opponent panel dynamic nodes  
+        Label[] opponentPanelRefs = new Label[6];
+        ProgressBar opponentEnergyBar = new ProgressBar(0);
 
         GridPane board = new GridPane();
         board.setAlignment(Pos.CENTER);
@@ -337,6 +349,11 @@ return card;
         currentMonsterLabel.setText(
             controller.getCurrentMonster().getName()
         );
+        refreshMonsterPanels(
+    controller.getPlayer(), controller.getOpponent(),
+    playerPanelRefs, playerEnergyBar,
+    opponentPanelRefs, opponentEnergyBar
+);
 
         Card drawnCard = controller.getLastCardDrawn();
 
@@ -447,19 +464,34 @@ powerupBox.setStyle(
             stage.widthProperty().subtract(240).divide(10),
             stage.heightProperty().subtract(240).divide(10)
         );
-        VBox left = new VBox(10);
-        left.prefWidthProperty().bind(
-            stage.widthProperty().subtract(cellSize.multiply(10)).divide(2)
+       VBox left = new VBox(10);
+            left.prefWidthProperty().bind(
+                stage.widthProperty().subtract(cellSize.multiply(10)).divide(2)
             );
-        left.setAlignment(Pos.CENTER);
-        left.setStyle("-fx-background-color: #2a2a4e;");
+            left.setAlignment(Pos.CENTER);
+            left.setStyle("-fx-background-color: #2a2a4e;");
+            left.setPadding(new Insets(10));
 
         VBox right = new VBox(10);
-        right.prefWidthProperty().bind(
-        stage.widthProperty().subtract(cellSize.multiply(10)).divide(2)
-        );
-        right.setAlignment(Pos.CENTER);
-        right.setStyle("-fx-background-color: #2a2a4e;");
+right.prefWidthProperty().bind(
+    stage.widthProperty().subtract(cellSize.multiply(10)).divide(2)
+);
+right.setAlignment(Pos.CENTER);
+right.setStyle("-fx-background-color: #2a2a4e;");
+right.setPadding(new Insets(10));
+
+VBox playerPanel = buildMonsterInfoPanel(
+    controller.getPlayer(), "YOU", "#4fc3f7", playerPanelRefs, playerEnergyBar, stage
+);
+VBox opponentPanel = buildMonsterInfoPanel(
+    controller.getOpponent(), "OPPONENT", "#ff6b6b", opponentPanelRefs, opponentEnergyBar, stage
+);
+playerPanel.setMaxWidth(170);
+opponentPanel.setMaxWidth(170);
+ 
+left.getChildren().add(playerPanel);
+right.getChildren().add(opponentPanel);
+
 
         BorderPane root = new BorderPane();
         root.setTop(top);
@@ -538,8 +570,8 @@ powerupBox.setStyle(
 			ImageView monsterImage = new ImageView(
 			new Image(getClass().getResourceAsStream(imagePath))
 			);
-			monsterImage.setFitWidth(180);
-			monsterImage.setFitHeight(130);
+			monsterImage.setFitWidth(70);
+            monsterImage.setFitHeight(60);
 			monsterImage.setPreserveRatio(true);
 			
 			// getting the name of the monster 
@@ -778,6 +810,211 @@ private String getCardIconPath(Card card) {
     if (card instanceof ConfusionCard)  return "/game/images/confused_icon.png";
     return null;
 }
+//    Builds one monster info panel (used for both player & opponent)
+// ============================================================
+ 
+private VBox buildMonsterInfoPanel(Monster monster, String label,
+        String accentColor, Label[] refs, ProgressBar energyBar, Stage stage) {
+ 
+    // --- YOU / OPPONENT badge ---
+    Label badge = new Label(label);
+    badge.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+    badge.setStyle(
+        "-fx-text-fill: white;" +
+        "-fx-background-color: " + accentColor + ";" +
+        "-fx-padding: 3 12 3 12;" +
+        "-fx-background-radius: 10;"
+    );
+ 
+    // --- Monster Image ---
+    String imagePath = getMonsterImagePath(monster.getName());
+    ImageView monsterImage = new ImageView(
+        new Image(getClass().getResourceAsStream(imagePath))
+    );
+    monsterImage.setFitWidth(100);
+    monsterImage.setFitHeight(80);
+    monsterImage.setPreserveRatio(true);
+ 
+    // --- Name ---
+    Label nameLabel = new Label(monster.getName());
+    nameLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+    nameLabel.setStyle("-fx-text-fill: " + accentColor + ";");
+ 
+    // --- Type badge ---
+    Label typeLabel = new Label(getTypeOfMonster(monster));
+    typeLabel.setFont(Font.font("Arial", FontWeight.BOLD, 11));
+    typeLabel.setStyle(
+        "-fx-text-fill: #1a1a2e;" +
+        "-fx-background-color: " + accentColor + ";" +
+        "-fx-padding: 2 10 2 10;" +
+        "-fx-background-radius: 8;"
+    );
+ 
+    // --- Original Role (static) ---
+    Label originalRoleLabel = new Label("Role: " + monster.getOriginalRole());
+    originalRoleLabel.setFont(Font.font("Arial", 11));
+    originalRoleLabel.setStyle("-fx-text-fill: #aaaaaa;");
+ 
+    // --- Current Role (changes when confused) ---
+    Label currentRoleLabel = new Label("Current: " + monster.getRole());
+    currentRoleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 11));
+    currentRoleLabel.setStyle("-fx-text-fill: white;");
+    refs[2] = currentRoleLabel;
+ 
+    // --- Position ---
+    Label positionLabel = new Label("📍 Position: " + monster.getPosition());
+    positionLabel.setFont(Font.font("Arial", 11));
+    positionLabel.setStyle("-fx-text-fill: #cccccc;");
+    refs[1] = positionLabel;
+ 
+    // --- Energy Label ---
+    Label energyLabel = new Label("⚡ " + monster.getEnergy() + " / 1000");
+    energyLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+    energyLabel.setStyle("-fx-text-fill: #ffcc00;");
+    refs[0] = energyLabel;
+ 
+    // --- Energy Bar ---
+    double energyPercent = Math.min((double) monster.getEnergy() / 1000.0, 1.0);
+    energyBar.setProgress(energyPercent);
+    energyBar.prefWidthProperty().bind(stage.widthProperty().divide(8));
+    energyBar.setStyle(getEnergyBarStyle(energyPercent));
+ 
+    VBox energySection = new VBox(4, energyLabel, energyBar);
+    energySection.setAlignment(Pos.CENTER);
+ 
+    // --- Status Effects ---
+    Label shieldLabel = new Label();
+    shieldLabel.setFont(Font.font("Arial", FontWeight.BOLD, 11));
+    refs[3] = shieldLabel;
+ 
+    Label confusionLabel = new Label();
+    confusionLabel.setFont(Font.font("Arial", FontWeight.BOLD, 11));
+    refs[4] = confusionLabel;
+ 
+    Label specialLabel = new Label(); // momentum / focus / frozen
+    specialLabel.setFont(Font.font("Arial", FontWeight.BOLD, 11));
+    refs[5] = specialLabel;
+ 
+    VBox statusBox = new VBox(3, shieldLabel, confusionLabel, specialLabel);
+    statusBox.setAlignment(Pos.CENTER);
+ 
+    // update status effects initially
+    refreshStatusLabels(monster, refs);
+ 
+    Separator sep = new Separator();
+ 
+    // --- Assemble Card ---
+    VBox card = new VBox(8,
+        badge, monsterImage, nameLabel, typeLabel,
+        originalRoleLabel, currentRoleLabel,
+        sep, positionLabel, energySection, statusBox
+    );
+    card.setAlignment(Pos.CENTER);
+    card.setPadding(new Insets(16));
+    card.setStyle(
+        "-fx-background-color: #2a2a4e;" +
+        "-fx-background-radius: 16;" +
+        "-fx-border-color: " + accentColor + ";" +
+        "-fx-border-width: 2;" +
+        "-fx-border-radius: 16;"
+    );
+ 
+    return card;
+}
+// 3. ADD THIS HELPER — returns correct energy bar color style
+// ============================================================
+ 
+private String getEnergyBarStyle(double percent) {
+    String color;
+    if (percent > 0.6)      color = "#44ff88"; // green
+    else if (percent > 0.3) color = "#ffcc00"; // yellow
+    else                    color = "#ff4444"; // red
+ 
+    return "-fx-accent: " + color + ";" +
+           "-fx-background-color: #1a1a2e;" +
+           "-fx-background-radius: 6;" +
+           "-fx-pref-height: 12;";
+}
+// 4. ADD THIS HELPER — refreshes all status effect labels
+// ============================================================
+ 
+private void refreshStatusLabels(Monster monster, Label[] refs) {
+    // shield
+    if (monster.isShielded()) {
+        refs[3].setText("🛡 Shielded");
+        refs[3].setStyle("-fx-text-fill: #4fc3f7; -fx-background-color: #1a3a5c; -fx-padding: 2 8 2 8; -fx-background-radius: 8;");
+    } else {
+        refs[3].setText("");
+        refs[3].setStyle("");
+    }
+ 
+    // confusion
+    if (monster.isConfused()) {
+        refs[4].setText("😵 Confused (" + monster.getConfusionTurns() + ")");
+        refs[4].setStyle("-fx-text-fill: #ff44ff; -fx-background-color: #2a1a3a; -fx-padding: 2 8 2 8; -fx-background-radius: 8;");
+    } else {
+        refs[4].setText("");
+        refs[4].setStyle("");
+    }
+ 
+    // frozen / momentum / focus
+    if (monster.isFrozen()) {
+        refs[5].setText("🧊 Frozen");
+        refs[5].setStyle("-fx-text-fill: #88ddff; -fx-background-color: #1a2a3a; -fx-padding: 2 8 2 8; -fx-background-radius: 8;");
+    } else if (monster instanceof Dasher && ((Dasher) monster).getMomentumTurns() > 0) {
+        refs[5].setText("💨 Momentum (" + ((Dasher) monster).getMomentumTurns() + ")");
+        refs[5].setStyle("-fx-text-fill: #ffaa44; -fx-background-color: #2a1a00; -fx-padding: 2 8 2 8; -fx-background-radius: 8;");
+    } else if (monster instanceof MultiTasker && ((MultiTasker) monster).getNormalSpeedTurns() > 0) {
+        refs[5].setText("🎯 Focus (" + ((MultiTasker) monster).getNormalSpeedTurns() + ")");
+        refs[5].setStyle("-fx-text-fill: #44ffaa; -fx-background-color: #002a1a; -fx-padding: 2 8 2 8; -fx-background-radius: 8;");
+    } else {
+        refs[5].setText("");
+        refs[5].setStyle("");
+    }
+}
+// 5. ADD THIS METHOD — call it after every roll to refresh both panels
+// ============================================================
+ 
+private void refreshMonsterPanels(Monster player, Monster opponent,
+        Label[] playerRefs, ProgressBar playerBar,
+        Label[] opponentRefs, ProgressBar opponentBar) {
+ 
+    // --- Player ---
+    double playerPercent = Math.min((double) player.getEnergy() / 1000.0, 1.0);
+    playerRefs[0].setText("⚡ " + player.getEnergy() + " / 1000");
+    playerRefs[1].setText("📍 Position: " + player.getPosition());
+    playerRefs[2].setText("Current: " + player.getRole());
+    playerRefs[2].setStyle(player.isConfused()
+        ? "-fx-text-fill: #ff44ff; -fx-font-weight: bold;"
+        : "-fx-text-fill: white; -fx-font-weight: bold;");
+    playerBar.setProgress(playerPercent);
+    playerBar.setStyle(getEnergyBarStyle(playerPercent));
+    refreshStatusLabels(player, playerRefs);
+ 
+    // --- Opponent ---
+    double opponentPercent = Math.min((double) opponent.getEnergy() / 1000.0, 1.0);
+    opponentRefs[0].setText("⚡ " + opponent.getEnergy() + " / 1000");
+    opponentRefs[1].setText("📍 Position: " + opponent.getPosition());
+    opponentRefs[2].setText("Current: " + opponent.getRole());
+    opponentRefs[2].setStyle(opponent.isConfused()
+        ? "-fx-text-fill: #ff44ff; -fx-font-weight: bold;"
+        : "-fx-text-fill: white; -fx-font-weight: bold;");
+    opponentBar.setProgress(opponentPercent);
+    opponentBar.setStyle(getEnergyBarStyle(opponentPercent));
+    refreshStatusLabels(opponent, opponentRefs);
+}
+private void playMusic(String audioPath) {
+    if (currentMusic != null) {
+        currentMusic.stop();
+    }
+    java.net.URL resource = getClass().getResource(audioPath);
+    if (resource == null) return;
+    javafx.scene.media.Media media = new javafx.scene.media.Media(resource.toString());
+    currentMusic = new javafx.scene.media.MediaPlayer(media);
+    currentMusic.setCycleCount(javafx.scene.media.MediaPlayer.INDEFINITE); // loops forever
+    currentMusic.play();
+}
+
 
     
     

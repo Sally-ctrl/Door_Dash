@@ -358,6 +358,9 @@ public Card getLastCardDrawn() {
     return Board.getLastCardDrawn();
 }
 
-
 public void clearLastCardDrawn() { Board.clearLastCardDrawn(); }
+public int getPlayerPosition()   { return game.getPlayer().getPosition(); }
+public int getOpponentPosition() { return game.getOpponent().getPosition(); }
+public int getPlayerEnergy()     { return game.getPlayer().getEnergy(); }
+public int getOpponentEnergy()   { return game.getOpponent().getEnergy(); }
 }
