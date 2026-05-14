@@ -58,7 +58,7 @@ public class Board {
 		}
 		return new int[]{row,col};
 	}
-	
+
 	private Cell getCell(int index){
 		int[] ind = this.indexToRowCol(index);
 		return boardCells[ind[0]][ind[1]];
