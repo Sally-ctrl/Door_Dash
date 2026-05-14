@@ -66,6 +66,18 @@ public class GameController {
                     stackPane.getChildren().add(iv);
                 }
                     Label indexLabel = new Label ( Integer.toString(i+1));
+                    if (cell instanceof DoorCell && i != Constants.BOARD_COLS * Constants.BOARD_ROWS - 1) {
+                    Label energyLabel = new Label(String.valueOf(((DoorCell) cell).getEnergy()));
+                    energyLabel.setFont(Font.font("Arial", FontWeight.BOLD, 9));
+                    energyLabel.setStyle(
+                        "-fx-text-fill: white;" +
+                        "-fx-background-color: " + (((DoorCell)cell).getRole() == Role.SCARER ? "#cc2222" : "#2255cc") + ";" +
+                        "-fx-padding: 1 4 1 4;" +
+                        "-fx-background-radius: 4;"
+                    );
+                    StackPane.setAlignment(energyLabel, Pos.TOP_RIGHT);
+                    stackPane.getChildren().add(energyLabel);
+}
                 indexLabel.setStyle(
                     "-fx-font-family: 'Comic Sans MS';" +       // bold blocky font
                     "-fx-font-size: 13;" +
@@ -396,6 +408,29 @@ public void refreshBoard(GridPane board, NumberBinding cellSize) {
             existing.setImage(
                 new Image(getClass().getResourceAsStream(imagePath))
             );
+        }
+    }
+}
+public void refreshLandedCell(GridPane board, int position) {
+    int[] rowCol = indexToRowCol(position);
+    Cell cell = game.getBoard().getBoardCells()[rowCol[0]][rowCol[1]];
+    
+    if (!(cell instanceof DoorCell)) return;
+    if (position == Constants.BOARD_COLS * Constants.BOARD_ROWS - 1) return;
+
+    StackPane stackPane = (StackPane) getNodeFromGrid(board, position);
+    if (stackPane == null) return;
+
+    String tagId = "cell-image-" + position;
+    for (javafx.scene.Node node : stackPane.getChildren()) {
+        if (tagId.equals(node.getId())) {
+            String imagePath = getImagePath(cell, position);
+            if (imagePath != null) {
+                ((ImageView) node).setImage(
+                    new Image(getClass().getResourceAsStream(imagePath))
+                );
+            }
+            break;
         }
     }
 }

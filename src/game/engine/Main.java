@@ -362,7 +362,8 @@ return card;
         playerPanelRefs, playerEnergyBar,
         opponentPanelRefs, opponentEnergyBar
             );
-        controller.refreshBoard(board, cellSize);
+        controller.refreshLandedCell(board, controller.getPlayerPosition());
+        controller.refreshLandedCell(board, controller.getOpponentPosition());
         // animate tokens to new positions
         animateTokenToCell(
             playerToken,
