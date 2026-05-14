@@ -62,6 +62,7 @@ public class GameController {
                     iv.fitWidthProperty().bind(cellsize);
                     iv.fitHeightProperty().bind(cellsize);
                     iv.setPreserveRatio(false);
+                    iv.setId("cell-image-" + i); // ← TAG IT with the cell index
                     stackPane.getChildren().add(iv);
                 }
                     Label indexLabel = new Label ( Integer.toString(i+1));
@@ -363,4 +364,39 @@ public int getPlayerPosition()   { return game.getPlayer().getPosition(); }
 public int getOpponentPosition() { return game.getOpponent().getPosition(); }
 public int getPlayerEnergy()     { return game.getPlayer().getEnergy(); }
 public int getOpponentEnergy()   { return game.getOpponent().getEnergy(); }
+
+public void refreshBoard(GridPane board, NumberBinding cellSize) {
+    Cell[][] cells = game.getBoard().getBoardCells();
+
+    for (int i = 0; i < Constants.BOARD_ROWS * Constants.BOARD_COLS; i++) {
+        int[] rowCol = indexToRowCol(i);
+        Cell cell = cells[rowCol[0]][rowCol[1]];
+
+        // only refresh door cells that are not the winning door
+        if (!(cell instanceof DoorCell)) continue;
+        if (i == Constants.BOARD_COLS * Constants.BOARD_ROWS - 1) continue;
+
+        StackPane stackPane = (StackPane) getNodeFromGrid(board, i);
+        if (stackPane == null) continue;
+
+        // find the tagged ImageView for this cell
+        String tagId = "cell-image-" + i;
+        ImageView existing = null;
+        for (javafx.scene.Node node : stackPane.getChildren()) {
+            if (tagId.equals(node.getId())) {
+                existing = (ImageView) node;
+                break;
+            }
+        }
+
+        // get the correct image path now (open or closed)
+        String imagePath = getImagePath(cell, i);
+        if (imagePath != null && existing != null) {
+            // just swap the image — keep everything else the same
+            existing.setImage(
+                new Image(getClass().getResourceAsStream(imagePath))
+            );
+        }
+    }
+}
 }

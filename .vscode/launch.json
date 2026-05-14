@@ -1,4 +1,4 @@
-{
+/*{
   "version": "0.2.0",
   "configurations": [
     {
@@ -10,20 +10,19 @@
     }
   ]
 }
-
+*/
 
 // Sally launch version comment it and put yours hen run --bosa
 //sanks baby -bosa back
-/*{
+{
   "version": "0.2.0",
   "configurations": [
-    
     {
       "type": "java",
       "name": "Run JavaFX",
       "request": "launch",
       "mainClass": "game.engine.Main",
-      "vmArgs": "--module-path \"C:/Users/sarah/OneDrive/Desktop/GameProject/javafx-sdk-21.0.11/lib\" --add-modules javafx.controls,javafx.fxml"
+      "vmArgs": "--module-path \"C:/Users/sarah/OneDrive/Desktop/GameProject/javafx-sdk-21.0.11/lib\" --add-modules javafx.controls,javafx.fxml,javafx.media --add-opens javafx.base/com.sun.javafx=ALL-UNNAMED"
     }
   ]
-}*/
+}

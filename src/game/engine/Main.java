@@ -8,6 +8,8 @@ import game.engine.cards.SwapperCard;
 import game.engine.monsters.*;
 import javafx.scene.image.*;
 import java.io.IOException;
+import java.util.ArrayList;
+
 import javafx.animation.*;
 import javafx.util.Duration;
 import javafx.application.*;
@@ -25,6 +27,11 @@ public class Main extends Application {
     private GameController controller;
     private Game game;
     private MediaPlayer currentMusic;
+    private NumberBinding cellSize;
+    private ImageView playerToken;
+    private ImageView opponentToken;
+    private Pane overlay;        
+    private GridPane board;  
     public void start(Stage stage){
     	//i updated the constructor of game controller as well to create the game controller as soon as the view is launched 
             System.err.println("Running from: " + new java.io.File("").getAbsolutePath());
@@ -263,7 +270,8 @@ return card;
         Label[] opponentPanelRefs = new Label[6];
         ProgressBar opponentEnergyBar = new ProgressBar(0);
 
-        GridPane board = new GridPane();
+        //GridPane board = new GridPane();
+        board = new GridPane(); 
         board.setAlignment(Pos.CENTER);
         board.setGridLinesVisible(false);
 
@@ -350,11 +358,27 @@ return card;
             controller.getCurrentMonster().getName()
         );
         refreshMonsterPanels(
-    controller.getPlayer(), controller.getOpponent(),
-    playerPanelRefs, playerEnergyBar,
-    opponentPanelRefs, opponentEnergyBar
-);
+        controller.getPlayer(), controller.getOpponent(),
+        playerPanelRefs, playerEnergyBar,
+        opponentPanelRefs, opponentEnergyBar
+            );
+        controller.refreshBoard(board, cellSize);
+        // animate tokens to new positions
+        animateTokenToCell(
+            playerToken,
+            controller.getPlayerPosition() - 1,
+            null
+        );
+        animateTokenToCell(
+            opponentToken,
+            controller.getOpponentPosition() - 1,
+            null
+        );
 
+        Monster winner = controller.getWinner();
+        if (winner != null) {
+            showWinScreen(stage, winner);
+        }
         Card drawnCard = controller.getLastCardDrawn();
 
         if (drawnCard != null) {
@@ -460,7 +484,7 @@ powerupBox.setStyle(
         bottom.setPrefHeight(120);
         bottom.setStyle("-fx-background-color: #2a2a4e;");
 
-        NumberBinding cellSize = Bindings.min(
+        cellSize = Bindings.min(
             stage.widthProperty().subtract(240).divide(10),
             stage.heightProperty().subtract(240).divide(10)
         );
@@ -512,22 +536,61 @@ right.getChildren().add(opponentPanel);
             }
         }
     
-        Pane overlay = new Pane();
-        overlay.setMouseTransparent(true); // so it doesn't block clicks
+        //Pane overlay = new Pane();
+        
+        //overlay.setMouseTransparent(true); // so it doesn't block clicks
+        overlay = new Pane();           // ← ADD THIS
+        overlay.setMouseTransparent(true);
         StackPane boardWithOverlay = new StackPane();
         boardWithOverlay.getChildren().addAll(board, overlay);
         root.setCenter(boardWithOverlay);
         controller.loadBoard(board,cellSize);
+        // create player token
+playerToken = new ImageView(
+    new Image(getClass().getResourceAsStream(
+        getMonsterImagePath(controller.getPlayer().getName())
+    ))
+);
+playerToken.setFitWidth(40);
+playerToken.setFitHeight(40);
+playerToken.setPreserveRatio(true);
+playerToken.setMouseTransparent(true);
+
+// create opponent token
+opponentToken = new ImageView(
+    new Image(getClass().getResourceAsStream(
+        getMonsterImagePath(controller.getOpponent().getName())
+    ))
+);
+opponentToken.setFitWidth(40);
+opponentToken.setFitHeight(40);
+opponentToken.setPreserveRatio(true);
+opponentToken.setMouseTransparent(true);
+
+// add both to overlay
+overlay.getChildren().addAll(playerToken, opponentToken);
+
+// place them at starting position
+placeTokenAtCell(playerToken, 0);
+placeTokenAtCell(opponentToken, 0);
         
         stage.widthProperty().addListener((obs, oldVal, newVal) -> {
-                overlay.getChildren().clear();
-                controller.drawTransports(overlay, board);
-                });
-                stage.heightProperty().addListener((obs, oldVal, newVal) -> {
-                    overlay.getChildren().clear();
-                    controller.drawTransports(overlay, board);
-                });
+    overlay.getChildren().clear();
+    controller.drawTransports(overlay, board);
+    // re-add tokens after clearing
+    overlay.getChildren().addAll(playerToken, opponentToken);
+    placeTokenAtCell(playerToken, controller.getPlayerPosition() - 1);
+    placeTokenAtCell(opponentToken, controller.getOpponentPosition() - 1);
+});
 
+stage.heightProperty().addListener((obs, oldVal, newVal) -> {
+    overlay.getChildren().clear();
+    controller.drawTransports(overlay, board);
+    // re-add tokens after clearing
+    overlay.getChildren().addAll(playerToken, opponentToken);
+    placeTokenAtCell(playerToken, controller.getPlayerPosition() - 1);
+    placeTokenAtCell(opponentToken, controller.getOpponentPosition() - 1);
+});
         controller.drawTransports(overlay, board);
         stage.setScene(new Scene(root));
         stage.setMaximized(true);
@@ -721,8 +784,58 @@ private void showInfoAlert(String message) {
 //  Also add this stub to Main.java — you'll flesh it out later
 // ============================================================
 public void showWinScreen(Stage stage, Monster winner) {
-    //will implement it later 
-}
+    playMusic("/game/audio/welcome.mp3");
+
+    // winner image
+    ImageView winnerImage = new ImageView(
+        new Image(getClass().getResourceAsStream(
+            getMonsterImagePath(winner.getName())
+        ))
+    );
+    winnerImage.setFitWidth(200);
+    winnerImage.setFitHeight(180);
+    winnerImage.setPreserveRatio(true);
+
+    Label crownLabel = new Label("👑");
+    crownLabel.setFont(Font.font("Arial", 60));
+
+    Label winnerTitle = new Label("WINNER!");
+    winnerTitle.setFont(Font.font("Arial", FontWeight.BOLD, 52));
+    winnerTitle.setStyle("-fx-text-fill: #ffcc00;");
+
+    Label winnerName = new Label(winner.getName());
+    winnerName.setFont(Font.font("Arial", FontWeight.BOLD, 32));
+    winnerName.setStyle("-fx-text-fill: white;");
+
+    Label winnerEnergy = new Label("⚡ Final Energy: " + winner.getEnergy());
+    winnerEnergy.setFont(Font.font("Arial", 18));
+    winnerEnergy.setStyle("-fx-text-fill: #ffcc00;");
+
+    Button playAgainBtn = new Button("🔄  PLAY AGAIN");
+    playAgainBtn.setFont(Font.font("Arial", FontWeight.BOLD, 20));
+    playAgainBtn.setStyle(
+        "-fx-background-color: #ff6600;" +
+        "-fx-text-fill: white;" +
+        "-fx-padding: 12 36 12 36;" +
+        "-fx-background-radius: 28;" +
+        "-fx-cursor: hand;"
+    );
+    playAgainBtn.setOnAction(e -> {
+        this.controller = new GameController(this);
+        WelcomeStage(stage);
+    });
+
+    VBox root = new VBox(20,
+        crownLabel, winnerImage, winnerTitle, winnerName, winnerEnergy, playAgainBtn
+    );
+    root.setAlignment(Pos.CENTER);
+    root.setPadding(new Insets(60));
+    root.setStyle("-fx-background-color: #1a1a2e;");
+
+    stage.setScene(new Scene(root));
+    stage.setMaximized(true);
+    stage.centerOnScreen();
+    }
 public void showCardDrawnPopup(Card card) {
     Stage popup = new Stage();
     //popup.initModality(Modality.APPLICATION_MODAL); // blocks game until dismissed
@@ -1013,15 +1126,109 @@ private void playMusic(String audioPath) {
     currentMusic = new javafx.scene.media.MediaPlayer(media);
     currentMusic.setCycleCount(javafx.scene.media.MediaPlayer.INDEFINITE); // loops forever
     currentMusic.play();
+    }
+
+    private void placeTokenAtCell(ImageView token, int cellIndex) {
+    javafx.scene.Node cell = controller.getNodeFromGrid(board, cellIndex);
+    if (cell == null) return;
+
+    Platform.runLater(() -> {
+        Bounds cellBounds = cell.localToScene(cell.getBoundsInLocal());
+        Bounds overlayBounds = overlay.localToScene(overlay.getBoundsInLocal());
+
+        double centerX = (cellBounds.getMinX() + cellBounds.getMaxX()) / 2 
+                         - overlayBounds.getMinX();
+        double centerY = (cellBounds.getMinY() + cellBounds.getMaxY()) / 2 
+                         - overlayBounds.getMinY();
+
+        token.setX(centerX - token.getFitWidth() / 2);
+        token.setY(centerY - token.getFitHeight() / 2);
+    });
 }
 
-
+private void animateTokenToCell(ImageView token, int targetIndex, Runnable onFinished) {
+    // figure out current cell index from token position
+    int currentIndex = getTokenCurrentIndex(token);
     
+    if (currentIndex == targetIndex) {
+        if (onFinished != null) onFinished.run();
+        return;
+    }
     
-
-
+    // build list of cells to pass through
+    // step one cell at a time toward target
+    int step = (targetIndex > currentIndex) ? 1 : -1;
+    ArrayList<Integer> steps = new ArrayList<>();
+    for (int i = currentIndex + step; i != targetIndex + step; i += step) {
+        steps.add(i);
+    }
     
+    // animate step by step
+    animateSteps(token, steps, 0, onFinished);
+}
 
+private void animateSteps(ImageView token, ArrayList<Integer> steps, int stepIndex, Runnable onFinished) {
+    if (stepIndex >= steps.size()) {
+        if (onFinished != null) onFinished.run();
+        return;
+    }
+    
+    int cellIndex = steps.get(stepIndex);
+    javafx.scene.Node cell = controller.getNodeFromGrid(board, cellIndex);
+    if (cell == null) {
+        animateSteps(token, steps, stepIndex + 1, onFinished);
+        return;
+    }
+    
+    Platform.runLater(() -> {
+        Bounds cellBounds = cell.localToScene(cell.getBoundsInLocal());
+        Bounds overlayBounds = overlay.localToScene(overlay.getBoundsInLocal());
+        
+        double targetX = (cellBounds.getMinX() + cellBounds.getMaxX()) / 2
+                         - overlayBounds.getMinX() - token.getFitWidth() / 2;
+        double targetY = (cellBounds.getMinY() + cellBounds.getMaxY()) / 2
+                         - overlayBounds.getMinY() - token.getFitHeight() / 2;
+        
+        // each step takes 120ms
+        Timeline move = new Timeline(
+            new KeyFrame(Duration.millis(120),
+                new KeyValue(token.xProperty(), targetX,
+                    javafx.animation.Interpolator.EASE_BOTH),
+                new KeyValue(token.yProperty(), targetY,
+                    javafx.animation.Interpolator.EASE_BOTH)
+            )
+        );
+        
+        move.setOnFinished(e ->
+            animateSteps(token, steps, stepIndex + 1, onFinished) // next step
+        );
+        
+        move.play();
+    });
+}
+
+// helper — finds which cell index the token is currently sitting at
+private int getTokenCurrentIndex(ImageView token) {
+    for (int i = 0; i < Constants.BOARD_ROWS * Constants.BOARD_COLS; i++) {
+        javafx.scene.Node cell = controller.getNodeFromGrid(board, i);
+        if (cell == null) continue;
+        
+        Bounds cellBounds = cell.localToScene(cell.getBoundsInLocal());
+        Bounds overlayBounds = overlay.localToScene(overlay.getBoundsInLocal());
+        
+        double centerX = (cellBounds.getMinX() + cellBounds.getMaxX()) / 2
+                         - overlayBounds.getMinX() - token.getFitWidth() / 2;
+        double centerY = (cellBounds.getMinY() + cellBounds.getMaxY()) / 2
+                         - overlayBounds.getMinY() - token.getFitHeight() / 2;
+        
+        // if token is close to this cell's center — it's here
+        if (Math.abs(token.getX() - centerX) < 5 && Math.abs(token.getY() - centerY) < 5) {
+            return i;
+        }
+    }
+    return 0; // default to cell 0
+}
+    
 
     public static void main(String[] args) {
         launch(args);
