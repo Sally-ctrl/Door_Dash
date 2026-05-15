@@ -48,6 +48,9 @@ public class GameController {
     public GameController(Main mainView) {
         this.mainView = mainView;
     }
+    public int getCardsRemaining() {
+        return Board.getCards().size();
+    }
 
 
     public void loadBoard(GridPane board,NumberBinding cellsize){

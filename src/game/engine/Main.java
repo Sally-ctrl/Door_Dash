@@ -35,10 +35,13 @@ public class Main extends Application {
     private ImageView opponentToken;
     private Pane overlay;        
     private GridPane board;  
-    // ← NEW: track token positions explicitly
+    private VBox playerTeamBox;
+    private VBox opponentTeamBox;
+   private Label cardsRemainingLabel;
+    private Label reshuffledLabel;
     private int playerTokenIndex = 0;
     private int opponentTokenIndex = 0;
-
+    
 
     public void start(Stage stage){
         System.err.println("Running from: " + new java.io.File("").getAbsolutePath());
@@ -258,7 +261,6 @@ public class Main extends Application {
     playerTokenIndex = 0;
     opponentTokenIndex = 0;
 
-
     Label[] playerPanelRefs = new Label[6];
     ProgressBar playerEnergyBar = new ProgressBar(0);
    
@@ -394,12 +396,41 @@ public class Main extends Application {
     top.getChildren().addAll(leftSection, centerSection, rightSection);
 
 
-   HBox bottom = new HBox();
-bottom.setPrefHeight(120);
-bottom.setStyle("-fx-background-color: #2a2a4e;");
+   //HBox bottom = new HBox();
+//bottom.setPrefHeight(120);
+//bottom.setStyle("-fx-background-color: #2a2a4e;");
     // ───────────────────────────────────────────────────────────────────
 
+    // replace your empty bottom HBox with this
+HBox bottom = new HBox(20);
+bottom.setPrefHeight(80);
+bottom.setAlignment(Pos.CENTER_LEFT);
+bottom.setPadding(new Insets(10, 20, 10, 20));
+bottom.setStyle("-fx-background-color: #2a2a4e;");
 
+ImageView cardIcon = new ImageView(
+    new Image(getClass().getResourceAsStream("/game/images/card.png"))
+);
+cardIcon.setFitWidth(40);
+cardIcon.setFitHeight(50);
+cardIcon.setPreserveRatio(true);
+
+Label cardTitle = new Label("CARD PILE");
+cardTitle.setFont(Font.font("Arial", FontWeight.BOLD, 11));
+cardTitle.setStyle("-fx-text-fill: #aaaaaa;");
+
+cardsRemainingLabel = new Label(Board.getCards().size() + " cards left");
+cardsRemainingLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+cardsRemainingLabel.setStyle("-fx-text-fill: #ffcc00;");
+
+reshuffledLabel = new Label("");
+reshuffledLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+reshuffledLabel.setStyle("-fx-text-fill: #44ff88;");
+
+VBox cardInfo = new VBox(3, cardTitle, cardsRemainingLabel, reshuffledLabel);
+cardInfo.setAlignment(Pos.CENTER_LEFT);
+
+bottom.getChildren().addAll(cardIcon, cardInfo);
     cellSize = Bindings.min(
         stage.widthProperty().subtract(240).divide(10),
         stage.heightProperty().subtract(240).divide(10)
@@ -517,8 +548,6 @@ bottom.setStyle("-fx-background-color: #2a2a4e;");
         try {
             controller.playTurn();
             int roll = controller.getLastRoll();
-
-
             rollButton.setDisable(true);
 
 
@@ -548,8 +577,6 @@ bottom.setStyle("-fx-background-color: #2a2a4e;");
                         playerPanelRefs, playerEnergyBar,
                         opponentPanelRefs, opponentEnergyBar
                     );
-
-
                     // update bottom team boxes
                    
                     int playerTarget   = controller.getPlayerPosition();
@@ -584,10 +611,19 @@ bottom.setStyle("-fx-background-color: #2a2a4e;");
 
 
                     Card drawnCard = controller.getLastCardDrawn();
-                    if (drawnCard != null) {
-                        showCardDrawnPopup(drawnCard);
-                        controller.clearLastCardDrawn();
-                    }
+                    
+
+if (drawnCard != null) {
+    showCardDrawnPopup(drawnCard);
+    if (Board.getCards().size() == Board.getOriginalCards().size()) {
+        reshuffledLabel.setText("🔀 Reshuffled!");
+        PauseTransition clear = new PauseTransition(Duration.seconds(3));
+        clear.setOnFinished(f -> reshuffledLabel.setText(""));
+        clear.play();
+    }
+    controller.clearLastCardDrawn();
+}
+cardsRemainingLabel.setText(Board.getCards().size() + " cards left");
 
 
                 } catch (Exception ex) {
@@ -705,6 +741,33 @@ bottom.setStyle("-fx-background-color: #2a2a4e;");
             "-fx-border-width: 2;" +
             "-fx-border-radius: 20;"
         );
+        // After the existing card VBox is built, append team section
+Separator teamSep = new Separator();
+
+Label teamTitle = new Label("TEAM ON BOARD");
+teamTitle.setFont(Font.font("Arial", FontWeight.BOLD, 10));
+teamTitle.setStyle("-fx-text-fill: #aaaaaa;");
+
+VBox teamBox = new VBox(4, teamSep, teamTitle);
+
+for (Monster m : Board.getStationedMonsters()) {
+    if (m.getRole() == monster.getRole()) {
+        Label mLabel = new Label(m.getName() + " · ⚡" + m.getEnergy() + " · cell " + m.getPosition());
+        mLabel.setFont(Font.font("Arial", 10));
+        mLabel.setStyle("-fx-text-fill: #cccccc; -fx-background-color: #1a1a2e; -fx-padding: 4 8 4 8; -fx-background-radius: 6;");
+        mLabel.setWrapText(true);
+        mLabel.setMaxWidth(150);
+        teamBox.getChildren().add(mLabel);
+    }
+}
+if (label.equals("YOU")) {
+    playerTeamBox = teamBox;
+} else {
+    opponentTeamBox = teamBox;
+}
+
+
+card.getChildren().add(teamBox);
         return card;
     }
 
@@ -1042,7 +1105,31 @@ bottom.setStyle("-fx-background-color: #2a2a4e;");
             "-fx-border-width: 2;" +
             "-fx-border-radius: 16;"
         );
- 
+        // --- TEAM ON BOARD SECTION ---
+Separator teamSep = new Separator();
+
+Label teamTitle = new Label("TEAM ON BOARD");
+teamTitle.setFont(Font.font("Arial", FontWeight.BOLD, 10));
+teamTitle.setStyle("-fx-text-fill: #aaaaaa;");
+
+VBox teamBox = new VBox(4, teamSep, teamTitle);
+
+for (Monster m : Board.getStationedMonsters()) {
+    if (m.getRole() == monster.getRole()) {
+        Label mLabel = new Label(m.getName() + " · ⚡" + m.getEnergy() + " · cell " + m.getPosition());
+        mLabel.setFont(Font.font("Arial", 10));
+        mLabel.setStyle("-fx-text-fill: #cccccc; -fx-background-color: #1a1a2e; -fx-padding: 4 8 4 8; -fx-background-radius: 6;");
+        mLabel.setWrapText(true);
+        mLabel.setMaxWidth(150);
+        teamBox.getChildren().add(mLabel);
+    }
+}
+if (label.equals("YOU")) {
+    playerTeamBox = teamBox;
+} else {
+    opponentTeamBox = teamBox;
+}
+card.getChildren().add(teamBox);
         return card;
     }
 
@@ -1118,6 +1205,8 @@ bottom.setStyle("-fx-background-color: #2a2a4e;");
         opponentBar.setProgress(opponentPercent);
         opponentBar.setStyle(getEnergyBarStyle(opponentPercent));
         refreshStatusLabels(opponent, opponentRefs);
+        refreshTeamBox(playerTeamBox, player);
+        refreshTeamBox(opponentTeamBox, opponent);
     }
 
 
@@ -1131,6 +1220,8 @@ bottom.setStyle("-fx-background-color: #2a2a4e;");
         currentMusic = new javafx.scene.media.MediaPlayer(media);
         currentMusic.setCycleCount(javafx.scene.media.MediaPlayer.INDEFINITE);
         currentMusic.play();
+        
+        
     }
 
 
@@ -1220,11 +1311,27 @@ bottom.setStyle("-fx-background-color: #2a2a4e;");
             move.play();
         });
     }
-
+    private void refreshTeamBox(VBox teamBox, Monster monster) {
+    // keep first 2 children (separator + title), remove old labels
+    while (teamBox.getChildren().size() > 2) {
+        teamBox.getChildren().remove(2);
+    }
+    for (Monster m : Board.getStationedMonsters()) {
+        if (m.getRole() == monster.getRole()) {
+            Label mLabel = new Label(m.getName() + " · ⚡" + m.getEnergy() + " · cell " + m.getPosition());
+            mLabel.setFont(Font.font("Arial", 10));
+            mLabel.setStyle("-fx-text-fill: #cccccc; -fx-background-color: #1a1a2e; -fx-padding: 4 8 4 8; -fx-background-radius: 6;");
+            mLabel.setWrapText(true);
+            mLabel.setMaxWidth(150);
+            teamBox.getChildren().add(mLabel);
+        }
+    }
+}
 
     public static void main(String[] args) {
         launch(args);
     }
 }
+
 
 
