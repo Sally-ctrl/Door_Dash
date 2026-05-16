@@ -497,25 +497,31 @@ bottom.getChildren().addAll(cardIcon, cardInfo);
 
 
     playerToken = new ImageView(
-        new Image(getClass().getResourceAsStream(
-            getMonsterImagePath(controller.getPlayer().getName())
-        ))
+    new Image(getClass().getResourceAsStream(
+        getMonsterTokenPath(controller.getPlayer().getName())
+    ))
     );
     playerToken.setFitWidth(40);
     playerToken.setFitHeight(40);
     playerToken.setPreserveRatio(true);
     playerToken.setMouseTransparent(true);
+    playerToken.setStyle(
+    "-fx-effect: dropshadow(gaussian, #4fc3f7, 8, 0.8, 0, 0);"
+    );
 
 
-    opponentToken = new ImageView(
-        new Image(getClass().getResourceAsStream(
-            getMonsterImagePath(controller.getOpponent().getName())
-        ))
+  opponentToken = new ImageView(
+    new Image(getClass().getResourceAsStream(
+        getMonsterTokenPath(controller.getOpponent().getName())
+    ))
     );
     opponentToken.setFitWidth(40);
     opponentToken.setFitHeight(40);
     opponentToken.setPreserveRatio(true);
     opponentToken.setMouseTransparent(true);
+    opponentToken.setStyle(
+        "-fx-effect: dropshadow(gaussian, #ff6b6b, 8, 0.8, 0, 0);"
+    );
 
 
     overlay.getChildren().addAll(playerToken, opponentToken);
@@ -646,11 +652,47 @@ cardsRemainingLabel.setText(Board.getCards().size() + " cards left");
 
     controller.drawTransports(overlay, board);
     stage.setScene(new Scene(root));
-    stage.getScene().setOnKeyPressed(e -> {
+ stage.getScene().setOnKeyPressed(e -> {
+   if (e.getCode() == javafx.scene.input.KeyCode.W) {
+    controller.getCurrentMonster().setPosition(99);
+    placeTokenAtCell(
+        controller.getCurrentMonster() == controller.getPlayer() 
+            ? playerToken : opponentToken, 
+        99
+    );
+    playerTokenIndex = controller.getPlayerPosition();
+    opponentTokenIndex = controller.getOpponentPosition();
+    refreshMonsterPanels(
+        controller.getPlayer(), controller.getOpponent(),
+        playerPanelRefs, playerEnergyBar,
+        opponentPanelRefs, opponentEnergyBar
+    );
+    // CHECK WINNER AFTER MOVING
+   Monster winner = controller.getWinner();
+System.err.println("Winner check: " + winner);
+System.err.println("Player pos: " + controller.getPlayerPosition() + " energy: " + controller.getPlayerEnergy());
+System.err.println("Opponent pos: " + controller.getOpponentPosition() + " energy: " + controller.getOpponentEnergy());
+if (winner != null) {
+    showWinScreen(stage, winner);
+}
+    }
     if (e.getCode() == javafx.scene.input.KeyCode.E) {
-        showWinScreen(stage, controller.getPlayer());
+        // increase current monster's energy by 200
+        Monster current = controller.getCurrentMonster();
+        current.setEnergy(current.getEnergy() + 200);
+        refreshMonsterPanels(
+            controller.getPlayer(), controller.getOpponent(),
+            playerPanelRefs, playerEnergyBar,
+            opponentPanelRefs, opponentEnergyBar
+        );
+        
+         Monster winner = controller.getWinner();
+        if (winner != null) {
+            showWinScreen(stage, winner);
+        }
     }
 });
+
 root.requestFocus(); 
     stage.setMaximized(true);
     stage.centerOnScreen();
@@ -1313,6 +1355,8 @@ card.getChildren().add(teamBox);
     private void refreshMonsterPanels(Monster player, Monster opponent,
             Label[] playerRefs, ProgressBar playerBar,
             Label[] opponentRefs, ProgressBar opponentBar) {
+                boolean playerWasShielded = "🛡 Shielded".equals(playerRefs[3].getText());
+                boolean opponentWasShielded = "🛡 Shielded".equals(opponentRefs[3].getText());
  
         double playerPercent = Math.min((double) player.getEnergy() / 1000.0, 1.0);
         playerRefs[0].setText("⚡ " + player.getEnergy() + " / 1000");
@@ -1337,6 +1381,12 @@ card.getChildren().add(teamBox);
         refreshStatusLabels(opponent, opponentRefs);
         refreshTeamBox(playerTeamBox, player);
         refreshTeamBox(opponentTeamBox, opponent);
+        if (playerWasShielded && !player.isShielded()) {
+            showShieldBrokenPopup(player.getName());
+        }
+    if (opponentWasShielded && !opponent.isShielded()) {
+        showShieldBrokenPopup(opponent.getName());
+        }
     }
 
 
@@ -1456,6 +1506,78 @@ card.getChildren().add(teamBox);
             teamBox.getChildren().add(mLabel);
         }
     }
+}
+private String getMonsterTokenPath(String name) {
+    switch (name) {
+        case "James P. Sullivan":   return "/game/images/James_P.Sullivan.png";
+        case "Mike Wazowski":       return "/game/images/Mike_Wazowski.png";
+        case "Randall Boggs":       return "/game/images/Randall_Boggs.png";
+        case "Celia Mae":           return "/game/images/Celia_Mae.png";
+        case "Fungus":              return "/game/images/Fungus.png";
+        case "Yeti":                return "/game/images/Yeti.png";
+        default:                    return "/game/images/Mike_Wazowski.png";
+    }
+}
+private void showShieldBrokenPopup(String monsterName) {
+    Stage popup = new Stage();
+    popup.initModality(Modality.NONE);
+
+    ImageView icon = new ImageView(
+        new Image(getClass().getResourceAsStream("/game/images/sheild_icon.png"))
+    );
+    icon.setFitWidth(80);
+    icon.setFitHeight(80);
+    icon.setPreserveRatio(true);
+
+    Label header = new Label("🛡  SHIELD BROKEN");
+    header.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+    header.setStyle("-fx-text-fill: #aaaaaa;");
+
+    Label nameLabel = new Label(monsterName);
+    nameLabel.setFont(Font.font("Arial", FontWeight.BOLD, 26));
+    nameLabel.setStyle("-fx-text-fill: #4fc3f7;");
+
+    Label effectLabel = new Label("The shield absorbed the hit\nbut has now been destroyed!");
+    effectLabel.setFont(Font.font("Arial", 15));
+    effectLabel.setStyle("-fx-text-fill: #dddddd;");
+    effectLabel.setWrapText(true);
+    effectLabel.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+    effectLabel.setMaxWidth(260);
+
+    Button continueBtn = new Button("CONTINUE  ▶");
+    continueBtn.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+    continueBtn.setStyle(
+        "-fx-background-color: #ff6600;" +
+        "-fx-text-fill: white;" +
+        "-fx-padding: 10 28 10 28;" +
+        "-fx-background-radius: 20;" +
+        "-fx-cursor: hand;"
+    );
+    continueBtn.setOnAction(e -> popup.close());
+
+    VBox content = new VBox(14, header, icon, nameLabel, effectLabel, continueBtn);
+    content.setAlignment(Pos.CENTER);
+    content.setPadding(new Insets(36, 40, 36, 40));
+    content.setStyle(
+        "-fx-background-color: #2a2a4e;" +
+        "-fx-border-color: #4fc3f7;" +
+        "-fx-border-width: 3;" +
+        "-fx-border-radius: 20;" +
+        "-fx-background-radius: 20;"
+    );
+
+    popup.setScene(new Scene(content, 340, 380));
+    popup.setTitle("Shield Broken");
+
+    content.setTranslateY(300);
+    popup.show();
+    popup.toFront();
+    Timeline slideUp = new Timeline(
+        new KeyFrame(Duration.millis(300),
+            new KeyValue(content.translateYProperty(), 0,
+                javafx.animation.Interpolator.EASE_OUT))
+    );
+    slideUp.play();
 }
 
     public static void main(String[] args) {
