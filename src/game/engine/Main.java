@@ -9,7 +9,7 @@ import game.engine.monsters.*;
 import javafx.scene.image.*;
 import java.io.IOException;
 import java.util.ArrayList;
-
+import java.util.Random;
 
 import javafx.animation.*;
 import javafx.util.Duration;
@@ -646,6 +646,12 @@ cardsRemainingLabel.setText(Board.getCards().size() + " cards left");
 
     controller.drawTransports(overlay, board);
     stage.setScene(new Scene(root));
+    stage.getScene().setOnKeyPressed(e -> {
+    if (e.getCode() == javafx.scene.input.KeyCode.E) {
+        showWinScreen(stage, controller.getPlayer());
+    }
+});
+root.requestFocus(); 
     stage.setMaximized(true);
     stage.centerOnScreen();
 }
@@ -857,68 +863,192 @@ card.getChildren().add(teamBox);
         infoStage.show();
     }
 
-
+    //
     public void showWinScreen(Stage stage, Monster winner) {
-        playMusic("/game/audio/welcome.mp3");
+    playMusic("/game/audio/welcome.mp3");
 
+    Monster player   = controller.getPlayer();
+    Monster opponent = controller.getOpponent();
+    boolean playerWon = winner.getName().equals(player.getName());
 
-        ImageView winnerImage = new ImageView(
-            new Image(getClass().getResourceAsStream(
-                getMonsterImagePath(winner.getName())
-            ))
-        );
-        winnerImage.setFitWidth(200);
-        winnerImage.setFitHeight(180);
-        winnerImage.setPreserveRatio(true);
+    // --- Fireworks canvas ---
+    javafx.scene.canvas.Canvas canvas = new javafx.scene.canvas.Canvas(1600, 900);
+    javafx.scene.canvas.GraphicsContext gc = canvas.getGraphicsContext2D();
+    java.util.List<double[]> particles = new java.util.ArrayList<>();
+    Random rng = new Random();
 
+    Timeline fireworks = new Timeline(new KeyFrame(Duration.millis(16), e -> {
+        gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
+        if (rng.nextInt(3) == 0) {
+            double bx = 100 + rng.nextDouble() * 1400;
+            double by = 100 + rng.nextDouble() * 400;
+            double r = rng.nextDouble(), g = rng.nextDouble(), b = rng.nextDouble();
+            for (int p = 0; p < 60; p++) {
+                double angle = rng.nextDouble() * Math.PI * 2;
+                double speed = 1.5 + rng.nextDouble() * 5;
+                double life  = 40 + rng.nextInt(40);
+                particles.add(new double[]{bx, by,
+                    Math.cos(angle) * speed, Math.sin(angle) * speed,
+                    life, life, r, g, b});
+            }
+        }
+        java.util.Iterator<double[]> it = particles.iterator();
+        while (it.hasNext()) {
+            double[] p = it.next();
+            p[0] += p[2]; p[1] += p[3]; p[3] += 0.08; p[4] -= 1;
+            if (p[4] <= 0) { it.remove(); continue; }
+            double alpha = p[4] / p[5];
+            gc.setFill(javafx.scene.paint.Color.color(p[6], p[7], p[8], alpha));
+            double size = 3 * alpha + 1;
+            gc.fillOval(p[0] - size/2, p[1] - size/2, size, size);
+        }
+    }));
+    fireworks.setCycleCount(Timeline.INDEFINITE);
+    fireworks.play();
 
-        Label crownLabel = new Label("👑");
-        crownLabel.setFont(Font.font("Arial", 60));
+    // --- Game Won / Game Over banner ---
+    Label bannerLabel = new Label(playerWon ? "🎉 GAME WON!" : "💀 GAME OVER");
+    bannerLabel.setFont(Font.font("Arial", FontWeight.BOLD, 52));
+    bannerLabel.setStyle("-fx-text-fill: " + (playerWon ? "#ffcc00" : "#ff4444") + ";");
+    javafx.scene.effect.DropShadow textGlow = new javafx.scene.effect.DropShadow();
+    textGlow.setColor(playerWon
+        ? javafx.scene.paint.Color.web("#ffcc00")
+        : javafx.scene.paint.Color.web("#ff4444"));
+    textGlow.setRadius(20);
+    bannerLabel.setEffect(textGlow);
+    Timeline textPulse = new Timeline(
+        new KeyFrame(Duration.ZERO,         new KeyValue(textGlow.radiusProperty(), 10)),
+        new KeyFrame(Duration.seconds(0.8), new KeyValue(textGlow.radiusProperty(), 35))
+    );
+    textPulse.setAutoReverse(true);
+    textPulse.setCycleCount(Timeline.INDEFINITE);
+    textPulse.play();
 
+    // --- Winner announcement ---
+    Label crownLabel = new Label("👑");
+    crownLabel.setFont(Font.font("Arial", 50));
 
-        Label winnerTitle = new Label("WINNER!");
-        winnerTitle.setFont(Font.font("Arial", FontWeight.BOLD, 52));
-        winnerTitle.setStyle("-fx-text-fill: #ffcc00;");
+    ImageView winnerImage = new ImageView(
+        new Image(getClass().getResourceAsStream(getMonsterImagePath(winner.getName())))
+    );
+    winnerImage.setFitWidth(180);
+    winnerImage.setFitHeight(160);
+    winnerImage.setPreserveRatio(true);
+    TranslateTransition bounce = new TranslateTransition(Duration.millis(600), winnerImage);
+    bounce.setByY(-18);
+    bounce.setAutoReverse(true);
+    bounce.setCycleCount(Timeline.INDEFINITE);
+    bounce.play();
 
+    Label winnerName = new Label(winner.getName());
+    winnerName.setFont(Font.font("Arial", FontWeight.BOLD, 30));
+    winnerName.setStyle("-fx-text-fill: white;");
 
-        Label winnerName = new Label(winner.getName());
-        winnerName.setFont(Font.font("Arial", FontWeight.BOLD, 32));
-        winnerName.setStyle("-fx-text-fill: white;");
+    Label winnerRole = new Label("Role: " + winner.getRole().toString());
+    winnerRole.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+    winnerRole.setStyle(
+        "-fx-text-fill: #1a1a2e;" +
+        "-fx-background-color: " + (playerWon ? "#4fc3f7" : "#ff6b6b") + ";" +
+        "-fx-padding: 4 16 4 16;" +
+        "-fx-background-radius: 12;"
+    );
 
+    VBox winnerBox = new VBox(8, crownLabel, winnerImage, winnerName, winnerRole);
+    winnerBox.setAlignment(Pos.CENTER);
+    winnerBox.setPadding(new Insets(16));
+    winnerBox.setStyle(
+        "-fx-background-color: #2a2a4e;" +
+        "-fx-background-radius: 16;" +
+        "-fx-border-color: " + (playerWon ? "#ffcc00" : "#ff4444") + ";" +
+        "-fx-border-width: 2;" +
+        "-fx-border-radius: 16;"
+    );
 
-        Label winnerEnergy = new Label("⚡ Final Energy: " + winner.getEnergy());
-        winnerEnergy.setFont(Font.font("Arial", 18));
-        winnerEnergy.setStyle("-fx-text-fill: #ffcc00;");
+    // --- Final energy of both monsters ---
+    VBox playerEnergyBox = buildFinalEnergyCard(player, "YOU",      "#4fc3f7", winner);
+    VBox opponentEnergyBox = buildFinalEnergyCard(opponent, "OPPONENT", "#ff6b6b", winner);
 
+    HBox energyRow = new HBox(24, playerEnergyBox, opponentEnergyBox);
+    energyRow.setAlignment(Pos.CENTER);
 
-        Button playAgainBtn = new Button("🔄  PLAY AGAIN");
-        playAgainBtn.setFont(Font.font("Arial", FontWeight.BOLD, 20));
-        playAgainBtn.setStyle(
-            "-fx-background-color: #ff6600;" +
-            "-fx-text-fill: white;" +
-            "-fx-padding: 12 36 12 36;" +
-            "-fx-background-radius: 28;" +
-            "-fx-cursor: hand;"
-        );
-        playAgainBtn.setOnAction(e -> {
-            this.controller = new GameController(this);
-            WelcomeStage(stage);
-        });
+    // --- Return to start button ---
+    Button playAgainBtn = new Button("🔄  PLAY AGAIN");
+    playAgainBtn.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+    playAgainBtn.setStyle(
+        "-fx-background-color: #ff6600;" +
+        "-fx-text-fill: white;" +
+        "-fx-padding: 12 32 12 32;" +
+        "-fx-background-radius: 28;" +
+        "-fx-cursor: hand;"
+    );
+    playAgainBtn.setOnAction(e -> {
+        fireworks.stop();
+        this.controller = new GameController(this);
+        WelcomeStage(stage);
+    });
 
+    VBox content = new VBox(18,
+        bannerLabel, winnerBox, energyRow, playAgainBtn
+    );
+    content.setAlignment(Pos.CENTER);
+    content.setPadding(new Insets(40));
 
-        VBox root = new VBox(20,
-            crownLabel, winnerImage, winnerTitle, winnerName, winnerEnergy, playAgainBtn
-        );
-        root.setAlignment(Pos.CENTER);
-        root.setPadding(new Insets(60));
-        root.setStyle("-fx-background-color: #1a1a2e;");
+    StackPane root = new StackPane(canvas, content);
+    root.setStyle("-fx-background-color: #1a1a2e;");
+    canvas.widthProperty().bind(stage.widthProperty());
+    canvas.heightProperty().bind(stage.heightProperty());
 
+    stage.setScene(new Scene(root));
+    stage.setMaximized(true);
+    stage.centerOnScreen();
+}
 
-        stage.setScene(new Scene(root));
-        stage.setMaximized(true);
-        stage.centerOnScreen();
-    }
+// Helper to build a final energy card for each monster
+private VBox buildFinalEnergyCard(Monster monster, String label, String accentColor, Monster winner) {
+    boolean isWinner = monster.getName().equals(winner.getName());
 
+    Label badge = new Label((isWinner ? "👑 " : "") + label);
+    badge.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+    badge.setStyle(
+        "-fx-text-fill: #1a1a2e;" +
+        "-fx-background-color: " + accentColor + ";" +
+        "-fx-padding: 3 12 3 12;" +
+        "-fx-background-radius: 10;"
+    );
+
+    ImageView img = new ImageView(
+        new Image(getClass().getResourceAsStream(getMonsterImagePath(monster.getName())))
+    );
+    img.setFitWidth(70);
+    img.setFitHeight(60);
+    img.setPreserveRatio(true);
+
+    Label nameLabel = new Label(monster.getName());
+    nameLabel.setFont(Font.font("Arial", FontWeight.BOLD, 15));
+    nameLabel.setStyle("-fx-text-fill: " + accentColor + ";");
+
+    Label roleLabel = new Label("Role: " + monster.getRole().toString());
+    roleLabel.setFont(Font.font("Arial", 12));
+    roleLabel.setStyle("-fx-text-fill: #cccccc;");
+
+    Label energyLabel = new Label("⚡ Final Energy: " + monster.getEnergy());
+    energyLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+    energyLabel.setStyle("-fx-text-fill: #ffcc00;");
+
+    VBox card = new VBox(8, badge, img, nameLabel, roleLabel, energyLabel);
+    card.setAlignment(Pos.CENTER);
+    card.setPadding(new Insets(16));
+    card.setPrefWidth(180);
+    card.setStyle(
+        "-fx-background-color: #2a2a4e;" +
+        "-fx-background-radius: 14;" +
+        "-fx-border-color: " + accentColor + ";" +
+        "-fx-border-width: " + (isWinner ? "3" : "1") + ";" +
+        "-fx-border-radius: 14;"
+    );
+    return card;
+}
+    
 
     public void showCardDrawnPopup(Card card) {
         Stage popup = new Stage();
