@@ -41,6 +41,7 @@ public class Main extends Application {
     private Label reshuffledLabel;
     private int playerTokenIndex = 0;
     private int opponentTokenIndex = 0;
+    private boolean isMuted = false;
     
 
     public void start(Stage stage){
@@ -56,68 +57,213 @@ public class Main extends Application {
     }
 
 
-    public void WelcomeStage(Stage stage) {
-        playMusic("/game/audio/welcome.mp3");
-        stage.setTitle("Door Dash: Scare vs Laugh Touchdown");
+   public void WelcomeStage(Stage stage) {
+    playMusic("/game/audio/welcome.mp3");
+    stage.setTitle("Door Dash: Scare vs Laugh Touchdown");
 
+    // ── floating door particles canvas ──────────────────────
+    javafx.scene.canvas.Canvas particles = new javafx.scene.canvas.Canvas(1600, 900);
+    javafx.scene.canvas.GraphicsContext gc = particles.getGraphicsContext2D();
 
-        Label title = new Label("Door Dash");
-        title.setFont(Font.font("Arial", FontWeight.BOLD, 48));
-        title.setStyle("-fx-text-fill: #140a04;");
-
-
-        Label description = new Label(
-            "The goal:\n" +
-            "Be the first monster to reach cell 99 (Boo's Door) with at least 1000 energy\n\n" +
-            "How to Win\n" +
-            "You win if you:\n" +
-            "Reach cell 99, AND\n" +
-            "Have 1000 or more energy\n\n" +
-            "On Your Turn:\n\n" +
-            "(Optional) Use your monster powerup (costs 500 energy if used manually).\n\n" +
-            "Roll a 6-sided dice (1-6).\n" +
-            "Move forward that number of cells.\n" +
-            "Apply the effect of the cell you land on:\n" +
-            "- Doors -> gain or lose energy for your whole team\n" +
-            "- Cards -> draw a random card effect\n" +
-            "- Monster cells -> trigger special monster interactions\n" +
-            "- Conveyor/Socks -> move forward/backward with effects\n" +
-            "- Normal cell -> nothing happens\n\n" +
-            "If you land on the opponent's cell -> your move is cancelled and you retry."
-        );
-        description.setWrapText(true);
-        description.setFont(Font.font("Arial", 16));
-        description.setStyle("-fx-text-fill: #021b5e;");
-        VBox root = new VBox(30);
-        root.setAlignment(Pos.CENTER);
-        root.setPadding(new Insets(60));
-        root.setStyle("-fx-background-color: #bb69e1;");
-
-
-        Button playButton = new Button("PLAY");
-        playButton.setFont(Font.font("Arial", FontWeight.BOLD, 22));
-        playButton.setStyle("-fx-background-color: #ff6600; -fx-text-fill: white; -fx-padding: 14 40 14 40; -fx-background-radius: 30;");
-       
-        playButton.setOnAction(e -> {
-            try {
-                showTeamSelectScreen(stage);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                showErrorAlert("Error: " + ex.getMessage());
-            }
+    java.util.List<double[]> doors = new java.util.ArrayList<>();
+    Random rng = new Random();
+    for (int i = 0; i < 18; i++) {
+        doors.add(new double[]{
+            rng.nextDouble() * 1600,
+            rng.nextDouble() * 900,
+            18 + rng.nextDouble() * 28,
+            0.3 + rng.nextDouble() * 0.7,
+            rng.nextDouble(),
+            rng.nextBoolean() ? 1 : -1
         });
-        root.getChildren().addAll(title, description, playButton);
-
-
-        ScrollPane scrollPane = new ScrollPane(root);
-        scrollPane.setFitToWidth(true);
-        scrollPane.setFitToHeight(true);
-        scrollPane.setStyle("-fx-background: #bb69e1; -fx-background-color: #1a1a2e;");
-        root.prefWidthProperty().bind(scrollPane.widthProperty());
-
-
-        stage.setScene(new Scene(scrollPane));
     }
+
+    Timeline particleLoop = new Timeline(new KeyFrame(Duration.millis(30), e -> {
+        gc.clearRect(0, 0, particles.getWidth(), particles.getHeight());
+        for (double[] d : doors) {
+            d[1] -= d[3];
+            d[4] += d[5] * 0.012;
+            if (d[4] > 0.55) d[5] = -1;
+            if (d[4] < 0.05) { d[5] = 1; d[1] = 920; d[0] = rng.nextDouble() * 1600; }
+            if (d[1] < -50) { d[1] = 920; d[0] = rng.nextDouble() * 1600; }
+
+            double s = d[2], x = d[0], y = d[1];
+            double op = Math.max(0, Math.min(1, d[4]));
+            gc.setGlobalAlpha(op * 0.35);
+            gc.setFill(javafx.scene.paint.Color.web("#4fc3f7"));
+            gc.fillRoundRect(x, y, s * 0.6, s, 3, 3);
+            gc.setFill(javafx.scene.paint.Color.web("#ff6600"));
+            gc.fillOval(x + s * 0.42, y + s * 0.48, s * 0.1, s * 0.1);
+            gc.setGlobalAlpha(1.0);
+        }
+    }));
+    particleLoop.setCycleCount(Timeline.INDEFINITE);
+    particleLoop.play();
+
+    // ── DOOR DASH title ─────────────────────────────────────
+    Label title = new Label("DOOR DASH");
+    title.setFont(Font.font("Impact", FontWeight.BOLD, 92));
+    title.setStyle("-fx-text-fill: white;");
+
+    javafx.scene.effect.DropShadow titleGlow = new javafx.scene.effect.DropShadow();
+    titleGlow.setColor(javafx.scene.paint.Color.web("#ff6600"));
+    titleGlow.setRadius(30);
+    title.setEffect(titleGlow);
+    Timeline titlePulse = new Timeline(
+        new KeyFrame(Duration.ZERO,         new KeyValue(titleGlow.radiusProperty(), 18)),
+        new KeyFrame(Duration.seconds(1.2), new KeyValue(titleGlow.radiusProperty(), 50))
+    );
+    titlePulse.setAutoReverse(true);
+    titlePulse.setCycleCount(Timeline.INDEFINITE);
+    titlePulse.play();
+
+    // ── subtitle ────────────────────────────────────────────
+    Label subtitle = new Label("SCARE  VS  LAUGH  TOUCHDOWN");
+    subtitle.setFont(Font.font("Arial", FontWeight.BOLD, 20));
+    subtitle.setStyle("-fx-text-fill: #ffcc00;");
+
+    // ── monsters group photo ─────────────────────────────────
+    ImageView monstersPhoto = new ImageView(
+        new Image(getClass().getResourceAsStream("/game/images/monsters.jpg"))
+    );
+    monstersPhoto.setFitWidth(620);
+    monstersPhoto.setFitHeight(280);
+    monstersPhoto.setPreserveRatio(true);
+    monstersPhoto.setStyle(
+        "-fx-effect: dropshadow(gaussian, #4fc3f7, 20, 0.4, 0, 0);"
+    );
+
+    // subtle float animation on the photo
+    TranslateTransition photoFloat = new TranslateTransition(Duration.millis(2200), monstersPhoto);
+    photoFloat.setByY(-10);
+    photoFloat.setAutoReverse(true);
+    photoFloat.setCycleCount(Timeline.INDEFINITE);
+    photoFloat.play();
+
+    // ── PLAY button with PULSATING scale ────────────────────
+    Button playButton = new Button("▶   ENTER THE FLOOR");
+    playButton.setFont(Font.font("Arial", FontWeight.BOLD, 22));
+    playButton.setStyle(
+        "-fx-background-color: #ff6600;" +
+        "-fx-text-fill: white;" +
+        "-fx-padding: 16 52 16 52;" +
+        "-fx-background-radius: 40;" +
+        "-fx-cursor: hand;"
+    );
+
+    javafx.scene.effect.DropShadow btnGlow = new javafx.scene.effect.DropShadow();
+    btnGlow.setColor(javafx.scene.paint.Color.web("#ff6600"));
+    btnGlow.setRadius(20);
+    playButton.setEffect(btnGlow);
+
+    // scale pulse — the PRESS ME energy
+    ScaleTransition btnPulse = new ScaleTransition(Duration.millis(700), playButton);
+    btnPulse.setFromX(1.0);
+    btnPulse.setFromY(1.0);
+    btnPulse.setToX(1.08);
+    btnPulse.setToY(1.08);
+    btnPulse.setAutoReverse(true);
+    btnPulse.setCycleCount(Timeline.INDEFINITE);
+    btnPulse.play();
+
+    // glow pulse synced with scale
+    Timeline glowPulse = new Timeline(
+        new KeyFrame(Duration.ZERO,          new KeyValue(btnGlow.radiusProperty(), 15)),
+        new KeyFrame(Duration.millis(700),   new KeyValue(btnGlow.radiusProperty(), 45))
+    );
+    glowPulse.setAutoReverse(true);
+    glowPulse.setCycleCount(Timeline.INDEFINITE);
+    glowPulse.play();
+
+    playButton.setOnMouseEntered(e -> {
+        btnPulse.stop();
+        playButton.setScaleX(1.1);
+        playButton.setScaleY(1.1);
+        btnGlow.setRadius(55);
+    });
+    playButton.setOnMouseExited(e -> {
+        playButton.setScaleX(1.0);
+        playButton.setScaleY(1.0);
+        btnGlow.setRadius(20);
+        btnPulse.play();
+    });
+    playButton.setOnAction(e -> {
+        particleLoop.stop();
+        btnPulse.stop();
+        glowPulse.stop();
+        try {
+            showTeamSelectScreen(stage);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            showErrorAlert("Error: " + ex.getMessage());
+        }
+    });
+
+    // ── HOW TO PLAY button ──────────────────────────────────
+    Button howToButton = new Button("❓  HOW TO PLAY");
+    howToButton.setFont(Font.font("Arial", 14));
+    howToButton.setStyle(
+        "-fx-background-color: transparent;" +
+        "-fx-text-fill: #aaaaaa;" +
+        "-fx-border-color: #555555;" +
+        "-fx-border-radius: 20;" +
+        "-fx-background-radius: 20;" +
+        "-fx-padding: 8 24 8 24;" +
+        "-fx-cursor: hand;"
+    );
+    howToButton.setOnMouseEntered(e -> howToButton.setStyle(
+        "-fx-background-color: #2a2a4e;" +
+        "-fx-text-fill: white;" +
+        "-fx-border-color: #aaaaaa;" +
+        "-fx-border-radius: 20;" +
+        "-fx-background-radius: 20;" +
+        "-fx-padding: 8 24 8 24;" +
+        "-fx-cursor: hand;"
+    ));
+    howToButton.setOnMouseExited(e -> howToButton.setStyle(
+        "-fx-background-color: transparent;" +
+        "-fx-text-fill: #aaaaaa;" +
+        "-fx-border-color: #555555;" +
+        "-fx-border-radius: 20;" +
+        "-fx-background-radius: 20;" +
+        "-fx-padding: 8 24 8 24;" +
+        "-fx-cursor: hand;"
+    ));
+    howToButton.setOnAction(e -> showHowToPlay(stage));
+
+    // ── tagline ─────────────────────────────────────────────
+    Label tagline = new Label("\"We scare because we care.\"  ·  \"We laugh, that's our path.\"");
+    tagline.setFont(Font.font("Arial", FontWeight.NORMAL, 13));
+    tagline.setStyle("-fx-text-fill: #555577; -fx-font-style: italic;");
+
+    // ── assemble center ──────────────────────────────────────
+    HBox bottomBtns = new HBox(12, howToButton, buildMuteButton());
+    bottomBtns.setAlignment(Pos.CENTER);
+    VBox center = new VBox(14, title, subtitle, monstersPhoto, playButton, bottomBtns, tagline);
+    center.setAlignment(Pos.CENTER);
+    center.setPadding(new Insets(40));
+
+    // slide-up entrance
+    center.setTranslateY(60);
+    center.setOpacity(0);
+    Timeline entrance = new Timeline(
+        new KeyFrame(Duration.millis(700),
+            new KeyValue(center.translateYProperty(), 0, javafx.animation.Interpolator.EASE_OUT),
+            new KeyValue(center.opacityProperty(), 1, javafx.animation.Interpolator.EASE_OUT)
+        )
+    );
+    entrance.play();
+
+    // ── root ─────────────────────────────────────────────────
+    StackPane root = new StackPane(particles, center);
+    root.setStyle("-fx-background-color: #1a1a2e;");
+    particles.widthProperty().bind(stage.widthProperty());
+    particles.heightProperty().bind(stage.heightProperty());
+
+    stage.setScene(new Scene(root));
+    stage.setMaximized(true);
+    stage.centerOnScreen();
+}
 
 
     public void showTeamSelectScreen(Stage stage) {
@@ -178,7 +324,9 @@ public class Main extends Application {
         );
         backButton.setOnAction(e -> WelcomeStage(stage));
      
-        VBox root = new VBox(30, title, subtitle, cardsRow, backButton);
+        HBox bottomRow = new HBox(12, backButton, buildMuteButton());
+        bottomRow.setAlignment(Pos.CENTER);
+        VBox root = new VBox(30, title, subtitle, cardsRow, bottomRow);
         root.setAlignment(Pos.CENTER);
         root.setPadding(new Insets(60));
         root.setStyle("-fx-background-color: #1a1a2e;");
@@ -387,7 +535,7 @@ public class Main extends Application {
     HBox.setHgrow(centerSection, Priority.ALWAYS);
 
 
-    HBox rightSection = new HBox(powerupBox);
+    HBox rightSection = new HBox(12, buildMuteButton(), powerupBox);
     rightSection.setAlignment(Pos.CENTER_RIGHT);
     rightSection.setPadding(new Insets(0, 20, 0, 0));
     HBox.setHgrow(rightSection, Priority.ALWAYS);
@@ -672,9 +820,7 @@ cardsRemainingLabel.setText(Board.getCards().size() + " cards left");
     );
     // CHECK WINNER AFTER MOVING
    Monster winner = controller.getWinner();
-System.err.println("Winner check: " + winner);
-System.err.println("Player pos: " + controller.getPlayerPosition() + " energy: " + controller.getPlayerEnergy());
-System.err.println("Opponent pos: " + controller.getOpponentPosition() + " energy: " + controller.getOpponentEnergy());
+
 if (winner != null) {
     showWinScreen(stage, winner);
 }
@@ -910,7 +1056,7 @@ card.getChildren().add(teamBox);
 
     //
     public void showWinScreen(Stage stage, Monster winner) {
-    playMusic("/game/audio/welcome.mp3");
+    playMusic("/game/audio/win.mp3");
 
     Monster player   = controller.getPlayer();
     Monster opponent = controller.getOpponent();
@@ -1393,19 +1539,18 @@ card.getChildren().add(teamBox);
     }
 
 
-    private void playMusic(String audioPath) {
-        if (currentMusic != null) {
-            currentMusic.stop();
-        }
-        java.net.URL resource = getClass().getResource(audioPath);
-        if (resource == null) return;
-        javafx.scene.media.Media media = new javafx.scene.media.Media(resource.toString());
-        currentMusic = new javafx.scene.media.MediaPlayer(media);
-        currentMusic.setCycleCount(javafx.scene.media.MediaPlayer.INDEFINITE);
-        currentMusic.play();
-        
-        
+  private void playMusic(String audioPath) {
+    if (currentMusic != null) {
+        currentMusic.stop();
     }
+    java.net.URL resource = getClass().getResource(audioPath);
+    if (resource == null) return;
+    javafx.scene.media.Media media = new javafx.scene.media.Media(resource.toString());
+    currentMusic = new javafx.scene.media.MediaPlayer(media);
+    currentMusic.setCycleCount(javafx.scene.media.MediaPlayer.INDEFINITE);
+    currentMusic.setMute(isMuted);   // ← respects current mute state
+    currentMusic.play();
+}
 
 
     private void placeTokenAtCell(ImageView token, int cellIndex) {
@@ -1581,6 +1726,183 @@ private void showShieldBrokenPopup(String monsterName) {
                 javafx.animation.Interpolator.EASE_OUT))
     );
     slideUp.play();
+}
+// Add this method anywhere in Main.java (e.g. after showTeamSelectScreen)
+
+private void showHowToPlay(Stage stage) {
+    Stage popup = new Stage();
+    popup.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+    popup.initOwner(stage);
+    popup.setTitle("How to Play");
+
+    // ── Title ────────────────────────────────────────────────
+    Label title = new Label("❓  HOW TO PLAY");
+    title.setFont(Font.font("Arial", FontWeight.BOLD, 28));
+    title.setStyle("-fx-text-fill: #ffcc00;");
+
+    // ── Sections ─────────────────────────────────────────────
+    String[][] sections = {
+        { "🎯  GOAL",
+          "Be the first monster to reach cell 99 (Boo's Door) with at least 1000 energy." },
+        { "🎲  YOUR TURN",
+          "1. (Optional) Use your powerup — costs 500 energy.\n"
+        + "2. Roll the dice (1–6) and move forward.\n"
+        + "3. Apply the effect of the cell you land on.\n"
+        + "4. If you land on the opponent's cell, move is cancelled — roll again." },
+        { "🚪  DOOR CELLS",
+          "Same role → you and your whole team GAIN the door's energy.\n"
+        + "Different role → you and your team LOSE the door's energy.\n"
+        + "A shield blocks the loss (door stays closed for next time)." },
+        { "🃏  CARD CELLS",
+          "Draw a random card:\n"
+        + "• Position Swap  • Energy Steal  • Shield  • Start Over  • Confusion" },
+        { "🧦  CONTAMINATION SOCKS",
+          "Move backward by the cell's value and lose 100 energy.\n"
+        + "Shield blocks the energy loss, but you still move back." },
+        { "🏭  CONVEYOR BELTS",
+          "Move forward by the cell's value — free ride!" },
+        { "👾  MONSTER CELLS",
+          "Same role → activate your powerup for FREE.\n"
+        + "Different role → if you have more energy than the cell monster, swap energies." },
+        { "⚡  MONSTER TYPES",
+          "Dasher      — 2× speed;  powerup: 3× for 3 turns.\n"
+        + "Dynamo      — all energy changes doubled;  powerup: freeze opponent 1 turn.\n"
+        + "MultiTasker — ½ speed, +200 energy bonus;  powerup: normal speed 2 turns.\n"
+        + "Schemer     — +10 on every energy change;  powerup: steal 10 from all." },
+    };
+
+    VBox sectionsBox = new VBox(8);
+    for (int i = 0; i < sections.length; i++) {
+        if (i != 0) sectionsBox.getChildren().add(new Separator());
+
+        Label header = new Label(sections[i][0]);
+        header.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        header.setStyle("-fx-text-fill: #ffcc00;");
+
+        Label body = new Label(sections[i][1]);
+        body.setFont(Font.font("Arial", 12));
+        body.setStyle(
+            "-fx-text-fill: #dddddd;" +
+            "-fx-background-color: #1e1e3a;" +
+            "-fx-padding: 8 12 8 12;" +
+            "-fx-background-radius: 8;"
+        );
+        body.setWrapText(true);
+        body.setMaxWidth(520);
+
+        sectionsBox.getChildren().addAll(header, body);
+    }
+
+    ScrollPane scroll = new ScrollPane(sectionsBox);
+    scroll.setFitToWidth(true);
+    scroll.setPrefHeight(420);
+    scroll.setStyle("-fx-background: #2a2a4e; -fx-background-color: #2a2a4e;");
+    scroll.setPadding(new Insets(0, 4, 0, 0));
+
+    // ── Close button (centered) ───────────────────────────────
+    Button closeBtn = new Button("✖  CLOSE");
+    closeBtn.setFont(Font.font("Arial", FontWeight.BOLD, 13));
+    closeBtn.setStyle(
+        "-fx-background-color: #ff6600;" +
+        "-fx-text-fill: white;" +
+        "-fx-padding: 9 28 9 28;" +
+        "-fx-background-radius: 20;" +
+        "-fx-cursor: hand;"
+    );
+    closeBtn.setOnMouseEntered(e -> closeBtn.setStyle(
+        "-fx-background-color: #ff8833;" +
+        "-fx-text-fill: white;" +
+        "-fx-padding: 9 28 9 28;" +
+        "-fx-background-radius: 20;" +
+        "-fx-cursor: hand;"
+    ));
+    closeBtn.setOnMouseExited(e -> closeBtn.setStyle(
+        "-fx-background-color: #ff6600;" +
+        "-fx-text-fill: white;" +
+        "-fx-padding: 9 28 9 28;" +
+        "-fx-background-radius: 20;" +
+        "-fx-cursor: hand;"
+    ));
+    closeBtn.setOnAction(e -> popup.close());
+
+    HBox btnRow = new HBox(closeBtn);
+    btnRow.setAlignment(Pos.CENTER);
+
+    // ── Assemble ──────────────────────────────────────────────
+    VBox content = new VBox(16, title, scroll, btnRow);
+    content.setAlignment(Pos.TOP_CENTER);
+    content.setPadding(new Insets(32, 32, 28, 32));
+    content.setStyle(
+        "-fx-background-color: #2a2a4e;" +
+        "-fx-background-radius: 20;" +
+        "-fx-border-color: #ffcc00;" +
+        "-fx-border-width: 2;" +
+        "-fx-border-radius: 20;"
+    );
+    content.setMaxWidth(600);
+
+    // slide-down entrance
+    content.setTranslateY(-40);
+    content.setOpacity(0);
+
+    StackPane root = new StackPane(content);
+    root.setAlignment(Pos.CENTER);
+    root.setStyle("-fx-background-color: rgba(10,10,30,0.85);");
+    root.setPadding(new Insets(40));
+
+    popup.setScene(new Scene(root, 660, 600));
+    popup.show();
+    popup.centerOnScreen();
+
+    Timeline entrance = new Timeline(
+        new KeyFrame(Duration.millis(250),
+            new KeyValue(content.translateYProperty(), 0,   javafx.animation.Interpolator.EASE_OUT),
+            new KeyValue(content.opacityProperty(),    1.0, javafx.animation.Interpolator.EASE_OUT)
+        )
+    );
+    entrance.play();
+}
+private Button buildMuteButton() {
+    Button muteBtn = new Button(isMuted ? "🔇" : "🔊");
+    muteBtn.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+    muteBtn.setStyle(
+        "-fx-background-color: #2a2a4e;" +
+        "-fx-text-fill: white;" +
+        "-fx-padding: 8 14 8 14;" +
+        "-fx-background-radius: 20;" +
+        "-fx-border-color: #555577;" +
+        "-fx-border-width: 1;" +
+        "-fx-border-radius: 20;" +
+        "-fx-cursor: hand;"
+    );
+    muteBtn.setOnMouseEntered(e -> muteBtn.setStyle(
+        "-fx-background-color: #3a3a6e;" +
+        "-fx-text-fill: white;" +
+        "-fx-padding: 8 14 8 14;" +
+        "-fx-background-radius: 20;" +
+        "-fx-border-color: #aaaaaa;" +
+        "-fx-border-width: 1;" +
+        "-fx-border-radius: 20;" +
+        "-fx-cursor: hand;"
+    ));
+    muteBtn.setOnMouseExited(e -> muteBtn.setStyle(
+        "-fx-background-color: #2a2a4e;" +
+        "-fx-text-fill: white;" +
+        "-fx-padding: 8 14 8 14;" +
+        "-fx-background-radius: 20;" +
+        "-fx-border-color: #555577;" +
+        "-fx-border-width: 1;" +
+        "-fx-border-radius: 20;" +
+        "-fx-cursor: hand;"
+    ));
+    muteBtn.setOnAction(e -> {
+        isMuted = !isMuted;
+        muteBtn.setText(isMuted ? "🔇" : "🔊");
+        if (currentMusic != null) {
+            currentMusic.setMute(isMuted);
+        }
+    });
+    return muteBtn;
 }
 
     public static void main(String[] args) {
