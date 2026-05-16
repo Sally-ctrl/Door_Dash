@@ -553,6 +553,8 @@ bottom.getChildren().addAll(cardIcon, cardInfo);
     rollButton.setOnAction(e -> {
         try {
             controller.playTurn();
+            System.err.println("Cards after turn: " + Board.getCards().size());
+            System.err.println("Card drawn: " + (Board.getLastCardDrawn() != null ? Board.getLastCardDrawn().getName() : "none"));
             int roll = controller.getLastRoll();
             rollButton.setDisable(true);
 
@@ -620,6 +622,7 @@ bottom.getChildren().addAll(cardIcon, cardInfo);
                     
 
 if (drawnCard != null) {
+     controller.clearLastCardDrawn();
     showCardDrawnPopup(drawnCard);
     if (Board.getCards().size() == Board.getOriginalCards().size()) {
         reshuffledLabel.setText("🔀 Reshuffled!");
@@ -627,7 +630,7 @@ if (drawnCard != null) {
         clear.setOnFinished(f -> reshuffledLabel.setText(""));
         clear.play();
     }
-    controller.clearLastCardDrawn();
+   
 }
 cardsRemainingLabel.setText(Board.getCards().size() + " cards left");
 
@@ -685,7 +688,7 @@ if (winner != null) {
             playerPanelRefs, playerEnergyBar,
             opponentPanelRefs, opponentEnergyBar
         );
-        
+
          Monster winner = controller.getWinner();
         if (winner != null) {
             showWinScreen(stage, winner);
@@ -1175,7 +1178,7 @@ private VBox buildFinalEnergyCard(Monster monster, String label, String accentCo
 
 
     private String getCardIconPath(Card card) {
-        if (card instanceof SwapperCard)     return "/game/images/position_swap.png";
+        if (card instanceof SwapperCard)     return "/game/images/position_swap .png";
         if (card instanceof ShieldCard)      return "/game/images/sheild_icon.png";
         if (card instanceof EnergyStealCard) return "/game/images/small_thief.png";
         if (card instanceof StartOverCard)   return "/game/images/square_one.png";
