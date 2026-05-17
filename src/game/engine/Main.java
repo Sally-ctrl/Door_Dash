@@ -1743,7 +1743,7 @@ private void showHowToPlay(Stage stage) {
     // ── Sections ─────────────────────────────────────────────
     String[][] sections = {
         { "🎯  GOAL",
-          "Be the first monster to reach cell 99 (Boo's Door) with at least 1000 energy." },
+          "Be the first monster to reach cell 100 (Boo's Door) with at least 1000 energy." },
         { "🎲  YOUR TURN",
           "1. (Optional) Use your powerup — costs 500 energy.\n"
         + "2. Roll the dice (1–6) and move forward.\n"
