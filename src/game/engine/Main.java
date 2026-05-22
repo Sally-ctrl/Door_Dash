@@ -42,6 +42,10 @@ public class Main extends Application {
     private int playerTokenIndex = 0;
     private int opponentTokenIndex = 0;
     private boolean isMuted = false;
+    private Timeline playerGlowTimeline;
+    private Timeline opponentGlowTimeline;
+    private VBox playerPanel;
+    private VBox opponentPanel;
     
 
     public void start(Stage stage){
@@ -405,21 +409,18 @@ public class Main extends Application {
     public void Game(Stage stage) {
     playMusic("/game/audio/game.mp3");
 
-
     playerTokenIndex = 0;
     opponentTokenIndex = 0;
 
     Label[] playerPanelRefs = new Label[6];
     ProgressBar playerEnergyBar = new ProgressBar(0);
-   
+
     Label[] opponentPanelRefs = new Label[6];
     ProgressBar opponentEnergyBar = new ProgressBar(0);
-
 
     board = new GridPane();
     board.setAlignment(Pos.CENTER);
     board.setGridLinesVisible(false);
-
 
     ImageView diceImageView = new ImageView();
     diceImageView.setFitWidth(64);
@@ -427,21 +428,17 @@ public class Main extends Application {
     diceImageView.setPreserveRatio(true);
     controller.setDiceImageView(diceImageView);
 
-
     Label turnLabel = new Label("Current Turn:");
     turnLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 13));
     turnLabel.setStyle("-fx-text-fill: #aaaaaa;");
-
 
     Label currentMonsterLabel = new Label(controller.getCurrentMonster().getName());
     currentMonsterLabel.setFont(Font.font("Arial", FontWeight.BOLD, 20));
     currentMonsterLabel.setStyle("-fx-text-fill: white;");
     controller.setCurrentMonsterLabel(currentMonsterLabel);
 
-
     VBox turnInfo = new VBox(2, turnLabel, currentMonsterLabel);
     turnInfo.setAlignment(Pos.CENTER_LEFT);
-
 
     Button rollButton = new Button("🎲  ROLL DICE");
     rollButton.setFont(Font.font("Arial", FontWeight.BOLD, 16));
@@ -467,11 +464,9 @@ public class Main extends Application {
         "-fx-cursor: hand;"
     ));
 
-
     Label powerupTitle = new Label("POWER UP");
     powerupTitle.setFont(Font.font("Arial", FontWeight.BOLD, 13));
     powerupTitle.setStyle("-fx-text-fill: #1a1a2e;");
-
 
     Button powerupButton = new Button("-500 ⚡");
     powerupButton.setFont(Font.font("Arial", FontWeight.BOLD, 16));
@@ -505,7 +500,6 @@ public class Main extends Application {
         }
     });
 
-
     VBox powerupBox = new VBox(6, powerupTitle, powerupButton);
     powerupBox.setAlignment(Pos.CENTER);
     powerupBox.setPadding(new Insets(10, 16, 10, 16));
@@ -517,74 +511,64 @@ public class Main extends Application {
         "-fx-background-radius: 10;"
     );
 
-
     HBox top = new HBox(30);
     top.setAlignment(Pos.CENTER_LEFT);
     top.setPadding(new Insets(0, 30, 0, 30));
     top.setPrefHeight(100);
     top.setStyle("-fx-background-color: #3d3d6b; -fx-border-color: #4a4a80; -fx-border-width: 0 0 2 0;");
 
-
     HBox leftSection = new HBox(16, turnInfo);
     leftSection.setAlignment(Pos.CENTER_LEFT);
     HBox.setHgrow(leftSection, Priority.ALWAYS);
 
-
     HBox centerSection = new HBox(16, rollButton, diceImageView);
     centerSection.setAlignment(Pos.CENTER);
     HBox.setHgrow(centerSection, Priority.ALWAYS);
-
 
     HBox rightSection = new HBox(12, buildMuteButton(), powerupBox);
     rightSection.setAlignment(Pos.CENTER_RIGHT);
     rightSection.setPadding(new Insets(0, 20, 0, 0));
     HBox.setHgrow(rightSection, Priority.ALWAYS);
 
-
     top.getChildren().addAll(leftSection, centerSection, rightSection);
 
+    // ── BOTTOM BAR ──────────────────────────────────────────
+    HBox bottom = new HBox(20);
+    bottom.setPrefHeight(80);
+    bottom.setAlignment(Pos.CENTER_LEFT);
+    bottom.setPadding(new Insets(10, 20, 10, 20));
+    bottom.setStyle("-fx-background-color: #2a2a4e;");
 
-   //HBox bottom = new HBox();
-//bottom.setPrefHeight(120);
-//bottom.setStyle("-fx-background-color: #2a2a4e;");
-    // ───────────────────────────────────────────────────────────────────
+    ImageView cardIcon = new ImageView(
+        new Image(getClass().getResourceAsStream("/game/images/card.png"))
+    );
+    cardIcon.setFitWidth(40);
+    cardIcon.setFitHeight(50);
+    cardIcon.setPreserveRatio(true);
 
-    // replace your empty bottom HBox with this
-HBox bottom = new HBox(20);
-bottom.setPrefHeight(80);
-bottom.setAlignment(Pos.CENTER_LEFT);
-bottom.setPadding(new Insets(10, 20, 10, 20));
-bottom.setStyle("-fx-background-color: #2a2a4e;");
+    Label cardTitle = new Label("CARD PILE");
+    cardTitle.setFont(Font.font("Arial", FontWeight.BOLD, 11));
+    cardTitle.setStyle("-fx-text-fill: #aaaaaa;");
 
-ImageView cardIcon = new ImageView(
-    new Image(getClass().getResourceAsStream("/game/images/card.png"))
-);
-cardIcon.setFitWidth(40);
-cardIcon.setFitHeight(50);
-cardIcon.setPreserveRatio(true);
+    cardsRemainingLabel = new Label(Board.getCards().size() + " cards left");
+    cardsRemainingLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+    cardsRemainingLabel.setStyle("-fx-text-fill: #ffcc00;");
 
-Label cardTitle = new Label("CARD PILE");
-cardTitle.setFont(Font.font("Arial", FontWeight.BOLD, 11));
-cardTitle.setStyle("-fx-text-fill: #aaaaaa;");
+    reshuffledLabel = new Label("");
+    reshuffledLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+    reshuffledLabel.setStyle("-fx-text-fill: #44ff88;");
 
-cardsRemainingLabel = new Label(Board.getCards().size() + " cards left");
-cardsRemainingLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
-cardsRemainingLabel.setStyle("-fx-text-fill: #ffcc00;");
+    VBox cardInfo = new VBox(3, cardTitle, cardsRemainingLabel, reshuffledLabel);
+    cardInfo.setAlignment(Pos.CENTER_LEFT);
+    bottom.getChildren().addAll(cardIcon, cardInfo);
 
-reshuffledLabel = new Label("");
-reshuffledLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
-reshuffledLabel.setStyle("-fx-text-fill: #44ff88;");
-
-VBox cardInfo = new VBox(3, cardTitle, cardsRemainingLabel, reshuffledLabel);
-cardInfo.setAlignment(Pos.CENTER_LEFT);
-
-bottom.getChildren().addAll(cardIcon, cardInfo);
+    // ── CELL SIZE BINDING ────────────────────────────────────
     cellSize = Bindings.min(
         stage.widthProperty().subtract(240).divide(10),
         stage.heightProperty().subtract(240).divide(10)
     );
 
-
+    // ── LEFT / RIGHT PANELS ──────────────────────────────────
     VBox left = new VBox(10);
     left.prefWidthProperty().bind(
         stage.widthProperty().subtract(cellSize.multiply(10)).divide(2)
@@ -592,7 +576,6 @@ bottom.getChildren().addAll(cardIcon, cardInfo);
     left.setAlignment(Pos.CENTER);
     left.setStyle("-fx-background-color: #2a2a4e;");
     left.setPadding(new Insets(10));
-
 
     VBox right = new VBox(10);
     right.prefWidthProperty().bind(
@@ -602,21 +585,19 @@ bottom.getChildren().addAll(cardIcon, cardInfo);
     right.setStyle("-fx-background-color: #2a2a4e;");
     right.setPadding(new Insets(10));
 
-
-    VBox playerPanel = buildMonsterInfoPanel(
+    playerPanel = buildMonsterInfoPanel(
         controller.getPlayer(), "YOU", "#4fc3f7", playerPanelRefs, playerEnergyBar, stage
     );
-    VBox opponentPanel = buildMonsterInfoPanel(
+    opponentPanel = buildMonsterInfoPanel(
         controller.getOpponent(), "OPPONENT", "#ff6b6b", opponentPanelRefs, opponentEnergyBar, stage
     );
     playerPanel.setMaxWidth(170);
     opponentPanel.setMaxWidth(170);
 
-
     left.getChildren().add(playerPanel);
     right.getChildren().add(opponentPanel);
 
-
+    // ── ROOT LAYOUT ──────────────────────────────────────────
     BorderPane root = new BorderPane();
     root.setTop(top);
     root.setBottom(bottom);
@@ -624,6 +605,9 @@ bottom.getChildren().addAll(cardIcon, cardInfo);
     root.setLeft(left);
     root.setStyle("-fx-background-color: #1a1a2e;");
 
+    // ── PHASE 1: CELLS APPEAR ONE BY ONE ────────────────────
+    int totalCells = Constants.BOARD_ROWS * Constants.BOARD_COLS;
+    int cellAnimDuration = totalCells * 35+ 500;
 
     for (int i = 0; i < Constants.BOARD_ROWS; i++) {
         for (int j = 0; j < Constants.BOARD_COLS; j++) {
@@ -631,11 +615,33 @@ bottom.getChildren().addAll(cardIcon, cardInfo);
             cell.setStyle("-fx-background-color: #f5e6c8; -fx-border-color: #999;");
             cell.prefWidthProperty().bind(cellSize);
             cell.prefHeightProperty().bind(cellSize);
+            cell.setOpacity(0);
+            cell.setScaleX(0.5);
+            cell.setScaleY(0.5);
             board.add(cell, j, i);
+
+            int index = i * Constants.BOARD_COLS + j;
+            PauseTransition delay = new PauseTransition(Duration.millis(index * 35));
+            delay.setOnFinished(ev -> {
+                FadeTransition ft = new FadeTransition(Duration.millis(250), cell);
+                ft.setFromValue(0);
+                ft.setToValue(1);
+
+                ScaleTransition st = new ScaleTransition(Duration.millis(250), cell);
+                st.setFromX(0.5);
+                st.setFromY(0.5);
+                st.setToX(1.0);
+                st.setToY(1.0);
+                st.setInterpolator(javafx.animation.Interpolator.EASE_OUT);
+
+                ParallelTransition pt = new ParallelTransition(ft, st);
+                pt.play();
+            });
+            delay.play();
         }
     }
 
-
+    // ── OVERLAY + BOARD SETUP ────────────────────────────────
     overlay = new Pane();
     overlay.setMouseTransparent(true);
     StackPane boardWithOverlay = new StackPane();
@@ -643,61 +649,96 @@ bottom.getChildren().addAll(cardIcon, cardInfo);
     root.setCenter(boardWithOverlay);
     controller.loadBoard(board, cellSize);
 
-
+    // ── TOKENS ───────────────────────────────────────────────
     playerToken = new ImageView(
-    new Image(getClass().getResourceAsStream(
-        getMonsterTokenPath(controller.getPlayer().getName())
-    ))
+        new Image(getClass().getResourceAsStream(
+            getMonsterTokenPath(controller.getPlayer().getName())
+        ))
     );
     playerToken.setFitWidth(40);
     playerToken.setFitHeight(40);
     playerToken.setPreserveRatio(true);
     playerToken.setMouseTransparent(true);
-    playerToken.setStyle(
-    "-fx-effect: dropshadow(gaussian, #4fc3f7, 8, 0.8, 0, 0);"
-    );
+    playerToken.setStyle("-fx-effect: dropshadow(gaussian, #4fc3f7, 8, 0.8, 0, 0);");
 
-
-  opponentToken = new ImageView(
-    new Image(getClass().getResourceAsStream(
-        getMonsterTokenPath(controller.getOpponent().getName())
-    ))
+    opponentToken = new ImageView(
+        new Image(getClass().getResourceAsStream(
+            getMonsterTokenPath(controller.getOpponent().getName())
+        ))
     );
     opponentToken.setFitWidth(40);
     opponentToken.setFitHeight(40);
     opponentToken.setPreserveRatio(true);
     opponentToken.setMouseTransparent(true);
-    opponentToken.setStyle(
-        "-fx-effect: dropshadow(gaussian, #ff6b6b, 8, 0.8, 0, 0);"
-    );
-
+    opponentToken.setStyle("-fx-effect: dropshadow(gaussian, #ff6b6b, 8, 0.8, 0, 0);");
 
     overlay.getChildren().addAll(playerToken, opponentToken);
-
-
     placeTokenAtCell(playerToken, 0);
     placeTokenAtCell(opponentToken, 0);
 
+    // ── PHASE 2: AFTER CELLS DONE, DRAW LADDERS THEN BELTS ──
+    PauseTransition waitForCells = new PauseTransition(Duration.millis(cellAnimDuration));
+    waitForCells.setOnFinished(done -> {
+        java.util.List<int[]> socks = new java.util.ArrayList<>();
+        java.util.List<int[]> belts = new java.util.ArrayList<>();
+        int max = Constants.BOARD_ROWS * Constants.BOARD_COLS;
 
-    stage.widthProperty().addListener((obs, oldVal, newVal) -> {
-        overlay.getChildren().clear();
-        controller.drawTransports(overlay, board);
-        overlay.getChildren().addAll(playerToken, opponentToken);
-        placeTokenAtCell(playerToken,   playerTokenIndex);
-        placeTokenAtCell(opponentToken, opponentTokenIndex);
+        for (int i = 0; i < max; i++) {
+            int[] rc = controller.indexToRowColPublic(i);
+            game.engine.cells.Cell c = controller.getBoardCells()[rc[0]][rc[1]];
+            if (c instanceof game.engine.cells.ContaminationSock) {
+                int effect = ((game.engine.cells.ContaminationSock) c).getEffect();
+                if (i + effect < max) socks.add(new int[]{i, i + effect});
+            } else if (c instanceof game.engine.cells.ConveyorBelt) {
+                int effect = ((game.engine.cells.ConveyorBelt) c).getEffect();
+                if (i + effect < max) belts.add(new int[]{i, i + effect});
+            }
+        }
+
+        int perItem = 600;
+        int drawDelay = 0;
+
+        // draw ladders one by one
+        for (int[] pair : socks) {
+            final int from = pair[0], to = pair[1];
+            PauseTransition pt = new PauseTransition(Duration.millis(drawDelay));
+            pt.setOnFinished(e -> controller.drawLadder(overlay, board, from, to));
+            pt.play();
+            drawDelay += perItem;
+        }
+
+        // draw belts one by one after ladders
+        for (int[] pair : belts) {
+            final int from = pair[0], to = pair[1];
+            PauseTransition pt = new PauseTransition(Duration.millis(drawDelay));
+            pt.setOnFinished(e -> controller.drawDoorLine(overlay, board, from, to));
+            pt.play();
+            drawDelay += perItem;
+        }
     });
-
+    
+    // ── RESIZE LISTENERS ─────────────────────────────────────
+    stage.widthProperty().addListener((obs, oldVal, newVal) -> {
+        Platform.runLater(() -> {
+            overlay.getChildren().clear();
+            controller.drawTransports(overlay, board);
+            overlay.getChildren().addAll(playerToken, opponentToken);
+            placeTokenAtCell(playerToken,   playerTokenIndex);
+            placeTokenAtCell(opponentToken, opponentTokenIndex);
+        });
+    });
 
     stage.heightProperty().addListener((obs, oldVal, newVal) -> {
-        overlay.getChildren().clear();
-        controller.drawTransports(overlay, board);
-        overlay.getChildren().addAll(playerToken, opponentToken);
-        placeTokenAtCell(playerToken,   playerTokenIndex);
-        placeTokenAtCell(opponentToken, opponentTokenIndex);
+        Platform.runLater(() -> {
+            overlay.getChildren().clear();
+            controller.drawTransports(overlay, board);
+            overlay.getChildren().addAll(playerToken, opponentToken);
+            placeTokenAtCell(playerToken,   playerTokenIndex);
+            placeTokenAtCell(opponentToken, opponentTokenIndex);
+        });
     });
 
-
-    // ── ROLL BUTTON ACTION ──────────────────────────────────────────────
+    // ── ROLL BUTTON ACTION ───────────────────────────────────
     rollButton.setOnAction(e -> {
         try {
             controller.playTurn();
@@ -705,7 +746,6 @@ bottom.getChildren().addAll(cardIcon, cardInfo);
             System.err.println("Card drawn: " + (Board.getLastCardDrawn() != null ? Board.getLastCardDrawn().getName() : "none"));
             int roll = controller.getLastRoll();
             rollButton.setDisable(true);
-
 
             Timeline diceAnimation = new Timeline();
             KeyFrame kf = new KeyFrame(Duration.millis(80), ev -> {
@@ -717,35 +757,32 @@ bottom.getChildren().addAll(cardIcon, cardInfo);
             diceAnimation.getKeyFrames().add(kf);
             diceAnimation.setCycleCount(15);
 
-
             diceAnimation.setOnFinished(ev -> {
                 try {
                     diceImageView.setImage(new Image(
                         getClass().getResourceAsStream("/game/images/dice" + roll + ".png")
                     ));
 
-
                     currentMonsterLabel.setText(controller.getCurrentMonster().getName());
 
+                    boolean isPlayerTurn = controller.getCurrentMonster().getName()
+                        .equals(controller.getPlayer().getName());
+                    updateTurnGlow(isPlayerTurn);
 
                     refreshMonsterPanels(
                         controller.getPlayer(), controller.getOpponent(),
                         playerPanelRefs, playerEnergyBar,
                         opponentPanelRefs, opponentEnergyBar
                     );
-                    // update bottom team boxes
-                   
+
                     int playerTarget   = controller.getPlayerPosition();
                     int opponentTarget = controller.getOpponentPosition();
-
 
                     animateTokenToCell(playerToken,   playerTarget,   null);
                     animateTokenToCell(opponentToken, opponentTarget, null);
 
-
                     playerTokenIndex   = playerTarget;
                     opponentTokenIndex = opponentTarget;
-
 
                     int maxSteps = Math.max(
                         Math.abs(playerTarget   - playerTokenIndex),
@@ -759,29 +796,23 @@ bottom.getChildren().addAll(cardIcon, cardInfo);
                     );
                     doorRefreshDelay.play();
 
-
                     Monster winner = controller.getWinner();
                     if (winner != null) {
                         showWinScreen(stage, winner);
                     }
 
-
                     Card drawnCard = controller.getLastCardDrawn();
-                    
-
-if (drawnCard != null) {
-     controller.clearLastCardDrawn();
-    showCardDrawnPopup(drawnCard);
-    if (Board.getCards().size() == Board.getOriginalCards().size()) {
-        reshuffledLabel.setText("🔀 Reshuffled!");
-        PauseTransition clear = new PauseTransition(Duration.seconds(3));
-        clear.setOnFinished(f -> reshuffledLabel.setText(""));
-        clear.play();
-    }
-   
-}
-cardsRemainingLabel.setText(Board.getCards().size() + " cards left");
-
+                    if (drawnCard != null) {
+                        controller.clearLastCardDrawn();
+                        showCardDrawnPopup(drawnCard);
+                        if (Board.getCards().size() == Board.getOriginalCards().size()) {
+                            reshuffledLabel.setText("🔀 Reshuffled!");
+                            PauseTransition clear = new PauseTransition(Duration.seconds(3));
+                            clear.setOnFinished(f -> reshuffledLabel.setText(""));
+                            clear.play();
+                        }
+                    }
+                    cardsRemainingLabel.setText(Board.getCards().size() + " cards left");
 
                 } catch (Exception ex) {
                     ex.printStackTrace();
@@ -790,59 +821,55 @@ cardsRemainingLabel.setText(Board.getCards().size() + " cards left");
                 }
             });
 
-
             diceAnimation.play();
-
 
         } catch (Exception ex) {
             showErrorAlert(ex.getMessage());
         }
     });
-    // ───────────────────────────────────────────────────────────────────
 
+    // ── SCENE + KEY BINDINGS ─────────────────────────────────
+    updateTurnGlow(controller.getCurrentMonster().getName()
+    .equals(controller.getPlayer().getName()));
+stage.setScene(new Scene(root));
 
-    controller.drawTransports(overlay, board);
-    stage.setScene(new Scene(root));
- stage.getScene().setOnKeyPressed(e -> {
-   if (e.getCode() == javafx.scene.input.KeyCode.W) {
-    controller.getCurrentMonster().setPosition(99);
-    placeTokenAtCell(
-        controller.getCurrentMonster() == controller.getPlayer() 
-            ? playerToken : opponentToken, 
-        99
-    );
-    playerTokenIndex = controller.getPlayerPosition();
-    opponentTokenIndex = controller.getOpponentPosition();
-    refreshMonsterPanels(
-        controller.getPlayer(), controller.getOpponent(),
-        playerPanelRefs, playerEnergyBar,
-        opponentPanelRefs, opponentEnergyBar
-    );
-    // CHECK WINNER AFTER MOVING
-   Monster winner = controller.getWinner();
-
-if (winner != null) {
-    showWinScreen(stage, winner);
-}
-    }
-    if (e.getCode() == javafx.scene.input.KeyCode.E) {
-        // increase current monster's energy by 200
-        Monster current = controller.getCurrentMonster();
-        current.setEnergy(current.getEnergy() + 200);
-        refreshMonsterPanels(
-            controller.getPlayer(), controller.getOpponent(),
-            playerPanelRefs, playerEnergyBar,
-            opponentPanelRefs, opponentEnergyBar
-        );
-
-         Monster winner = controller.getWinner();
-        if (winner != null) {
-            showWinScreen(stage, winner);
+// Start the sequential reveal AFTER the scene is shown
+// extra 500ms buffer to ensure scene is fully rendered before starting
+PauseTransition sceneReadyDelay = new PauseTransition(Duration.millis(500));
+sceneReadyDelay.setOnFinished(e -> waitForCells.play());
+sceneReadyDelay.play();
+    stage.getScene().setOnKeyPressed(e -> {
+        if (e.getCode() == javafx.scene.input.KeyCode.W) {
+            controller.getCurrentMonster().setPosition(99);
+            placeTokenAtCell(
+                controller.getCurrentMonster() == controller.getPlayer()
+                    ? playerToken : opponentToken,
+                99
+            );
+            playerTokenIndex   = controller.getPlayerPosition();
+            opponentTokenIndex = controller.getOpponentPosition();
+            refreshMonsterPanels(
+                controller.getPlayer(), controller.getOpponent(),
+                playerPanelRefs, playerEnergyBar,
+                opponentPanelRefs, opponentEnergyBar
+            );
+            Monster winner = controller.getWinner();
+            if (winner != null) showWinScreen(stage, winner);
         }
-    }
-});
+        if (e.getCode() == javafx.scene.input.KeyCode.E) {
+            Monster current = controller.getCurrentMonster();
+            current.setEnergy(current.getEnergy() + 200);
+            refreshMonsterPanels(
+                controller.getPlayer(), controller.getOpponent(),
+                playerPanelRefs, playerEnergyBar,
+                opponentPanelRefs, opponentEnergyBar
+            );
+            Monster winner = controller.getWinner();
+            if (winner != null) showWinScreen(stage, winner);
+        }
+    });
 
-root.requestFocus(); 
+    root.requestFocus();
     stage.setMaximized(true);
     stage.centerOnScreen();
 }
@@ -1905,6 +1932,61 @@ private Button buildMuteButton() {
     return muteBtn;
 }
 
+private void updateTurnGlow(boolean isPlayerTurn) {
+    // stop old animations
+    if (playerGlowTimeline != null)   playerGlowTimeline.stop();
+    if (opponentGlowTimeline != null) opponentGlowTimeline.stop();
+
+    javafx.scene.effect.DropShadow playerGlow = new javafx.scene.effect.DropShadow();
+    javafx.scene.effect.DropShadow opponentGlow = new javafx.scene.effect.DropShadow();
+
+    if (isPlayerTurn) {
+        // player panel pulses bright blue
+        playerGlow.setColor(javafx.scene.paint.Color.web("#4fc3f7"));
+        playerGlow.setRadius(0);
+        playerPanel.setEffect(playerGlow);
+
+        playerGlowTimeline = new Timeline(
+            new KeyFrame(Duration.ZERO,
+                new KeyValue(playerGlow.radiusProperty(), 0)),
+            new KeyFrame(Duration.millis(800),
+                new KeyValue(playerGlow.radiusProperty(), 35,
+                    javafx.animation.Interpolator.EASE_BOTH))
+        );
+        playerGlowTimeline.setAutoReverse(true);
+        playerGlowTimeline.setCycleCount(Timeline.INDEFINITE);
+        playerGlowTimeline.play();
+
+        // opponent panel dims
+        opponentGlow.setColor(javafx.scene.paint.Color.web("#ff6b6b"));
+        opponentGlow.setRadius(0);
+        opponentPanel.setEffect(opponentGlow);
+        opponentGlowTimeline = null;
+
+    } else {
+        // opponent panel pulses bright red
+        opponentGlow.setColor(javafx.scene.paint.Color.web("#ff6b6b"));
+        opponentGlow.setRadius(0);
+        opponentPanel.setEffect(opponentGlow);
+
+        opponentGlowTimeline = new Timeline(
+            new KeyFrame(Duration.ZERO,
+                new KeyValue(opponentGlow.radiusProperty(), 0)),
+            new KeyFrame(Duration.millis(800),
+                new KeyValue(opponentGlow.radiusProperty(), 35,
+                    javafx.animation.Interpolator.EASE_BOTH))
+        );
+        opponentGlowTimeline.setAutoReverse(true);
+        opponentGlowTimeline.setCycleCount(Timeline.INDEFINITE);
+        opponentGlowTimeline.play();
+
+        // player panel dims
+        playerGlow.setColor(javafx.scene.paint.Color.web("#4fc3f7"));
+        playerGlow.setRadius(0);
+        playerPanel.setEffect(playerGlow);
+        playerGlowTimeline = null;
+    }
+}
     public static void main(String[] args) {
         launch(args);
     }
