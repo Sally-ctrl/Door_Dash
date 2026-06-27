@@ -7,7 +7,6 @@ import game.engine.cards.StartOverCard;
 import game.engine.cards.SwapperCard;
 import game.engine.monsters.*;
 import javafx.scene.image.*;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -49,19 +48,16 @@ public class Main extends Application {
     
 
     public void start(Stage stage){
-        System.err.println("Running from: " + new java.io.File("").getAbsolutePath());
-        System.err.println("Cards exists: " + new java.io.File("cards.csv").exists());
-        System.err.println("Monsters exists: " + new java.io.File("monsters.csv").exists());
         this.controller = new GameController(this);
         stage.setMinHeight(700);
         stage.setMinWidth(1000);
         stage.setMaximized(true);
-        WelcomeStage(stage);
+        welcomeStage(stage);
         stage.show();
     }
 
 
-   public void WelcomeStage(Stage stage) {
+   public void welcomeStage(Stage stage) {
     playMusic("/game/audio/welcome.mp3");
     stage.setTitle("Door Dash: Scare vs Laugh Touchdown");
 
@@ -199,7 +195,7 @@ public class Main extends Application {
             showTeamSelectScreen(stage);
         } catch (Exception ex) {
             ex.printStackTrace();
-            showErrorAlert("Error: " + ex.getMessage());
+            showAlert("Error","Error: " + ex.getMessage());
         }
     });
 
@@ -301,7 +297,7 @@ public class Main extends Application {
                 controller.selectRole(Role.SCARER, stage);
             } catch (Exception ex) {
                 ex.printStackTrace();
-                showErrorAlert("Failed to load game data: " + ex.getMessage());
+                showAlert("Error","Failed to load game data: " + ex.getMessage());
             }
         });
      
@@ -310,7 +306,7 @@ public class Main extends Application {
                 controller.selectRole(Role.LAUGHER, stage);
             } catch (Exception ex) {
                 ex.printStackTrace();
-                showErrorAlert("Failed to load game data: " + ex.getMessage());
+                showAlert("Error","Failed to load game data: " + ex.getMessage());
             }
         });
      
@@ -326,7 +322,7 @@ public class Main extends Application {
             "-fx-border-radius: 20;" +
             "-fx-padding: 8 24 8 24;"
         );
-        backButton.setOnAction(e -> WelcomeStage(stage));
+        backButton.setOnAction(e -> welcomeStage(stage));
      
         HBox bottomRow = new HBox(12, backButton, buildMuteButton());
         bottomRow.setAlignment(Pos.CENTER);
@@ -406,7 +402,7 @@ public class Main extends Application {
     }
 
 
-    public void Game(Stage stage) {
+    public void showGame(Stage stage) {
     playMusic("/game/audio/game.mp3");
 
     playerTokenIndex = 0;
@@ -494,9 +490,9 @@ public class Main extends Application {
     powerupButton.setOnAction(e -> {
         try {
             controller.usePowerup();
-            showInfoAlert("Powerup activated for " + controller.getCurrentMonster().getName() + "!");
+            showAlert("Info", "Powerup activated for " + controller.getCurrentMonster().getName() + "!");
         } catch (Exception ex) {
-            showErrorAlert(ex.getMessage());
+            showAlert("Error",ex.getMessage());
         }
     });
 
@@ -607,7 +603,7 @@ public class Main extends Application {
 
     // ── PHASE 1: CELLS APPEAR ONE BY ONE ────────────────────
     int totalCells = Constants.BOARD_ROWS * Constants.BOARD_COLS;
-    int cellAnimDuration = totalCells * 35+ 500;
+    int cellAnimDuration = totalCells * 22 + 500;
 
     for (int i = 0; i < Constants.BOARD_ROWS; i++) {
         for (int j = 0; j < Constants.BOARD_COLS; j++) {
@@ -621,13 +617,13 @@ public class Main extends Application {
             board.add(cell, j, i);
 
             int index = i * Constants.BOARD_COLS + j;
-            PauseTransition delay = new PauseTransition(Duration.millis(index * 35));
+            PauseTransition delay = new PauseTransition(Duration.millis(index * 22));
             delay.setOnFinished(ev -> {
-                FadeTransition ft = new FadeTransition(Duration.millis(250), cell);
+                FadeTransition ft = new FadeTransition(Duration.millis(200), cell);
                 ft.setFromValue(0);
                 ft.setToValue(1);
 
-                ScaleTransition st = new ScaleTransition(Duration.millis(250), cell);
+                ScaleTransition st = new ScaleTransition(Duration.millis(200), cell);
                 st.setFromX(0.5);
                 st.setFromY(0.5);
                 st.setToX(1.0);
@@ -679,6 +675,8 @@ public class Main extends Application {
     // ── PHASE 2: AFTER CELLS DONE, DRAW LADDERS THEN BELTS ──
     PauseTransition waitForCells = new PauseTransition(Duration.millis(cellAnimDuration));
     waitForCells.setOnFinished(done -> {
+        // drop any transports pre-drawn by the resize listener that fires on maximize
+        overlay.getChildren().removeIf(n -> n != playerToken && n != opponentToken);
         java.util.List<int[]> socks = new java.util.ArrayList<>();
         java.util.List<int[]> belts = new java.util.ArrayList<>();
         int max = Constants.BOARD_ROWS * Constants.BOARD_COLS;
@@ -695,7 +693,7 @@ public class Main extends Application {
             }
         }
 
-        int perItem = 600;
+        int perItem = 350;
         int drawDelay = 0;
 
         // draw ladders one by one
@@ -742,8 +740,6 @@ public class Main extends Application {
     rollButton.setOnAction(e -> {
         try {
             controller.playTurn();
-            System.err.println("Cards after turn: " + Board.getCards().size());
-            System.err.println("Card drawn: " + (Board.getLastCardDrawn() != null ? Board.getLastCardDrawn().getName() : "none"));
             int roll = controller.getLastRoll();
             rollButton.setDisable(true);
 
@@ -778,6 +774,11 @@ public class Main extends Application {
                     int playerTarget   = controller.getPlayerPosition();
                     int opponentTarget = controller.getOpponentPosition();
 
+                    int prevPlayerIdx   = playerTokenIndex;
+                    int prevOpponentIdx = opponentTokenIndex;
+
+                    playCellSound(controller.getLastCellType());
+
                     animateTokenToCell(playerToken,   playerTarget,   null);
                     animateTokenToCell(opponentToken, opponentTarget, null);
 
@@ -785,8 +786,8 @@ public class Main extends Application {
                     opponentTokenIndex = opponentTarget;
 
                     int maxSteps = Math.max(
-                        Math.abs(playerTarget   - playerTokenIndex),
-                        Math.abs(opponentTarget - opponentTokenIndex)
+                        Math.abs(playerTarget   - prevPlayerIdx),
+                        Math.abs(opponentTarget - prevOpponentIdx)
                     );
                     PauseTransition doorRefreshDelay = new PauseTransition(
                         Duration.millis(maxSteps * 120 + 300)
@@ -824,7 +825,7 @@ public class Main extends Application {
             diceAnimation.play();
 
         } catch (Exception ex) {
-            showErrorAlert(ex.getMessage());
+            showAlert("Error",ex.getMessage());
         }
     });
 
@@ -873,7 +874,6 @@ sceneReadyDelay.play();
     stage.setMaximized(true);
     stage.centerOnScreen();
 }
-//end game
     private String getTypeOfMonster(Monster monster) {
         String result = (monster instanceof Dasher) ? "Dasher"
                 : (monster instanceof Dynamo)       ? "Dynamo"
@@ -883,20 +883,20 @@ sceneReadyDelay.play();
     }
 
 
-    private void showErrorAlert(String message) {
-        Stage errorStage = new Stage();
+    private void showAlert(String title, String message) {
+        Stage alertStage = new Stage();
         Label msg = new Label(message);
         msg.setWrapText(true);
         msg.setStyle("-fx-text-fill: white; -fx-font-size: 14;");
         Button ok = new Button("OK");
-        ok.setOnAction(e -> errorStage.close());
+        ok.setOnAction(e -> alertStage.close());
         VBox box = new VBox(20, msg, ok);
         box.setAlignment(Pos.CENTER);
         box.setPadding(new Insets(30));
         box.setStyle("-fx-background-color: #1a1a2e;");
-        errorStage.setScene(new Scene(box, 400, 200));
-        errorStage.setTitle("Error");
-        errorStage.show();
+        alertStage.setScene(new Scene(box, 400, 200));
+        alertStage.setTitle(title);
+        alertStage.show();
     }
 
 
@@ -1041,7 +1041,7 @@ card.getChildren().add(teamBox);
             "-fx-padding: 14 40 14 40;" +
             "-fx-background-radius: 30;"
         );
-        startButton.setOnAction(e -> Game(stage));
+        startButton.setOnAction(e -> showGame(stage));
      
         Button backButton = new Button("← Change Side");
         backButton.setFont(Font.font("Arial", 14));
@@ -1065,23 +1065,6 @@ card.getChildren().add(teamBox);
     }
 
 
-    private void showInfoAlert(String message) {
-        Stage infoStage = new Stage();
-        Label msg = new Label(message);
-        msg.setWrapText(true);
-        msg.setStyle("-fx-text-fill: white; -fx-font-size: 14;");
-        Button ok = new Button("OK");
-        ok.setOnAction(e -> infoStage.close());
-        VBox box = new VBox(20, msg, ok);
-        box.setAlignment(Pos.CENTER);
-        box.setPadding(new Insets(30));
-        box.setStyle("-fx-background-color: #1a1a2e;");
-        infoStage.setScene(new Scene(box, 400, 200));
-        infoStage.setTitle("Info");
-        infoStage.show();
-    }
-
-    //
     public void showWinScreen(Stage stage, Monster winner) {
     playMusic("/game/audio/win.mp3");
 
@@ -1202,7 +1185,7 @@ card.getChildren().add(teamBox);
     playAgainBtn.setOnAction(e -> {
         fireworks.stop();
         this.controller = new GameController(this);
-        WelcomeStage(stage);
+        welcomeStage(stage);
     });
 
     VBox content = new VBox(18,
@@ -1272,81 +1255,214 @@ private VBox buildFinalEnergyCard(Monster monster, String label, String accentCo
         Stage popup = new Stage();
         popup.initModality(Modality.NONE);
 
+        boolean lucky  = card.isLucky();
+        // per-card-type accent colour, dimmed to red when unlucky
+        String accent = lucky
+            ? ((card instanceof ShieldCard)      ? "#4fc3f7"
+             : (card instanceof SwapperCard)     ? "#cc88ff"
+             : (card instanceof EnergyStealCard) ? "#ffcc00"
+             : (card instanceof StartOverCard)   ? "#ff6644"
+             :                                     "#ff66ff")
+            : "#ff3333";
 
-        String iconPath = getCardIconPath(card);
-        ImageView icon = new ImageView(
-            new Image(getClass().getResourceAsStream(iconPath))
+        Random rng = new Random();
+
+        // ── CARD BACK ────────────────────────────────────────────────
+        ImageView backImg = new ImageView(
+            new Image(getClass().getResourceAsStream("/game/images/card.png"))
         );
-        icon.setFitWidth(80);
-        icon.setFitHeight(80);
-        icon.setPreserveRatio(true);
+        backImg.setFitWidth(320);
+        backImg.setFitHeight(460);
+        backImg.setPreserveRatio(false);
+        StackPane cardBack = new StackPane(backImg);
 
-
+        // ── CARD FRONT (hidden until flip midpoint) ──────────────────
         Label header = new Label("🃏  CARD DRAWN");
-        header.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-        header.setStyle("-fx-text-fill: #aaaaaa;");
+        header.setFont(Font.font("Arial", FontWeight.BOLD, 13));
+        header.setStyle("-fx-text-fill: #888888;");
 
+        ImageView icon = new ImageView(
+            new Image(getClass().getResourceAsStream(getCardIconPath(card)))
+        );
+        icon.setFitWidth(92); icon.setFitHeight(92);
+        icon.setPreserveRatio(true);
+        icon.setOpacity(0); icon.setScaleX(0.2); icon.setScaleY(0.2);
 
         Label nameLabel = new Label(card.getName());
-        nameLabel.setFont(Font.font("Arial", FontWeight.BOLD, 26));
-        nameLabel.setStyle("-fx-text-fill: #ffcc00;");
+        nameLabel.setFont(Font.font("Impact", FontWeight.BOLD, 28));
+        nameLabel.setStyle("-fx-text-fill: " + accent + ";");
         nameLabel.setWrapText(true);
         nameLabel.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
-
+        nameLabel.setOpacity(0); nameLabel.setTranslateY(16);
 
         Label effectLabel = new Label(card.getDescription());
-        effectLabel.setFont(Font.font("Arial", 15));
-        effectLabel.setStyle("-fx-text-fill: #dddddd;");
+        effectLabel.setFont(Font.font("Arial", 14));
+        effectLabel.setStyle("-fx-text-fill: #cccccc;");
         effectLabel.setWrapText(true);
         effectLabel.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
-        effectLabel.setMaxWidth(260);
+        effectLabel.setMaxWidth(280); effectLabel.setOpacity(0);
 
-
-        Label luckyLabel = new Label(card.isLucky() ? "✨ Lucky!" : "💀 Unlucky!");
-        luckyLabel.setFont(Font.font("Arial", FontWeight.BOLD, 13));
-        luckyLabel.setStyle(card.isLucky()
-            ? "-fx-text-fill: #44ff88; -fx-background-color: #1a3a2a; -fx-padding: 4 12 4 12; -fx-background-radius: 10;"
-            : "-fx-text-fill: #ff4444; -fx-background-color: #3a1a1a; -fx-padding: 4 12 4 12; -fx-background-radius: 10;"
+        Label luckyLabel = new Label(lucky ? "✨  LUCKY!" : "💀  UNLUCKY!");
+        luckyLabel.setFont(Font.font("Arial", FontWeight.BOLD, 15));
+        luckyLabel.setStyle(lucky
+            ? "-fx-text-fill: #111; -fx-background-color: #44ff88; -fx-padding: 5 18 5 18; -fx-background-radius: 20;"
+            : "-fx-text-fill: white;  -fx-background-color: #cc2222; -fx-padding: 5 18 5 18; -fx-background-radius: 20;"
         );
-
+        luckyLabel.setOpacity(0); luckyLabel.setScaleX(0); luckyLabel.setScaleY(0);
 
         Button continueBtn = new Button("CONTINUE  ▶");
-        continueBtn.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        continueBtn.setFont(Font.font("Arial", FontWeight.BOLD, 15));
         continueBtn.setStyle(
-            "-fx-background-color: #ff6600;" +
-            "-fx-text-fill: white;" +
-            "-fx-padding: 10 28 10 28;" +
-            "-fx-background-radius: 20;" +
-            "-fx-cursor: hand;"
+            "-fx-background-color: #ff6600; -fx-text-fill: white;" +
+            "-fx-padding: 10 30 10 30; -fx-background-radius: 20; -fx-cursor: hand;"
         );
+        continueBtn.setOpacity(0);
         continueBtn.setOnAction(e -> popup.close());
 
+        javafx.scene.effect.DropShadow cardGlow = new javafx.scene.effect.DropShadow();
+        cardGlow.setColor(javafx.scene.paint.Color.web(accent));
+        cardGlow.setRadius(0);
 
-        VBox content = new VBox(14, header, icon, nameLabel, effectLabel, luckyLabel, continueBtn);
-        content.setAlignment(Pos.CENTER);
-        content.setPadding(new Insets(36, 40, 36, 40));
-        content.setStyle(
-            "-fx-background-color: #2a2a4e;" +
-            "-fx-border-color: #ffcc00;" +
-            "-fx-border-width: 3;" +
-            "-fx-border-radius: 20;" +
-            "-fx-background-radius: 20;"
+        VBox cardFront = new VBox(13, header, icon, nameLabel, effectLabel, luckyLabel, continueBtn);
+        cardFront.setAlignment(Pos.CENTER);
+        cardFront.setPadding(new Insets(32, 38, 32, 38));
+        cardFront.setStyle(
+            "-fx-background-color: #1e1e3a;" +
+            "-fx-border-color: " + accent + ";" +
+            "-fx-border-width: 3; -fx-border-radius: 20; -fx-background-radius: 20;"
         );
+        cardFront.setEffect(cardGlow);
+        cardFront.setVisible(false);
 
+        // ── FLIP CONTAINER — Y-axis rotation (true card-flip look) ───
+        StackPane flipCard = new StackPane(cardBack, cardFront);
+        flipCard.setRotationAxis(new javafx.geometry.Point3D(0, 1, 0));
+        flipCard.setTranslateY(-85);
+        flipCard.setOpacity(0);
 
-        popup.setScene(new Scene(content, 340, 420));
+        StackPane root = new StackPane(flipCard);
+        root.setStyle("-fx-background-color: #10102a;");
+        root.setPadding(new Insets(18));
+        popup.setScene(new Scene(root, 380, 520));
         popup.setTitle("Card Drawn");
-
-
-        content.setTranslateY(300);
         popup.show();
         popup.toFront();
-        Timeline slideUp = new Timeline(
-            new KeyFrame(Duration.millis(300),
-                new KeyValue(content.translateYProperty(), 0,
-                    javafx.animation.Interpolator.EASE_OUT))
-        );
-        slideUp.play();
+
+        // ── Phase 1: deal card in from above ─────────────────────────
+        Timeline dealIn = new Timeline(new KeyFrame(Duration.millis(320),
+            new KeyValue(flipCard.translateYProperty(), 0,   Interpolator.EASE_OUT),
+            new KeyValue(flipCard.opacityProperty(),    1.0, Interpolator.EASE_OUT)
+        ));
+        dealIn.setOnFinished(d -> {
+            // ── Phase 2a: Y-rotate 0 → 90 (back narrows to edge) ────
+            Timeline flip1 = new Timeline(new KeyFrame(Duration.millis(190),
+                new KeyValue(flipCard.rotateProperty(), 90, Interpolator.EASE_IN)
+            ));
+            flip1.setOnFinished(mid -> {
+                cardBack.setVisible(false);
+                cardFront.setVisible(true);
+
+                // burst: 20 circles radiate from card centre, then vanish
+                for (int b = 0; b < 20; b++) {
+                    double angle = b * (2 * Math.PI / 20) + rng.nextDouble() * 0.18;
+                    double dist  = 55 + rng.nextDouble() * 100;
+                    javafx.scene.shape.Circle dot = new javafx.scene.shape.Circle(2.5 + rng.nextDouble() * 4.5);
+                    dot.setFill(javafx.scene.paint.Color.web(accent, 0.9));
+                    flipCard.getChildren().add(dot);
+                    Timeline burst = new Timeline(new KeyFrame(Duration.millis(520),
+                        new KeyValue(dot.translateXProperty(), Math.cos(angle) * dist, Interpolator.EASE_OUT),
+                        new KeyValue(dot.translateYProperty(), Math.sin(angle) * dist, Interpolator.EASE_OUT),
+                        new KeyValue(dot.opacityProperty(), 0, Interpolator.EASE_IN)
+                    ));
+                    burst.setOnFinished(e -> flipCard.getChildren().remove(dot));
+                    burst.play();
+                }
+
+                // ── Phase 2b: Y-rotate 90 → 0 (front expands) ───────
+                Timeline flip2 = new Timeline(new KeyFrame(Duration.millis(220),
+                    new KeyValue(flipCard.rotateProperty(), 0, Interpolator.EASE_OUT)
+                ));
+                flip2.setOnFinished(done -> {
+                    // pulsing glow
+                    Timeline glowPulse = new Timeline(
+                        new KeyFrame(Duration.ZERO,        new KeyValue(cardGlow.radiusProperty(), 4)),
+                        new KeyFrame(Duration.millis(850), new KeyValue(cardGlow.radiusProperty(),
+                            lucky ? 32 : 20, Interpolator.EASE_BOTH))
+                    );
+                    glowPulse.setAutoReverse(true);
+                    glowPulse.setCycleCount(Timeline.INDEFINITE);
+                    glowPulse.play();
+
+                    // gentle float
+                    TranslateTransition floatAnim = new TranslateTransition(Duration.millis(2200), flipCard);
+                    floatAnim.setByY(-11);
+                    floatAnim.setAutoReverse(true);
+                    floatAnim.setCycleCount(Timeline.INDEFINITE);
+                    floatAnim.play();
+
+                    // shake unlucky
+                    if (!lucky) {
+                        TranslateTransition shake = new TranslateTransition(Duration.millis(52), flipCard);
+                        shake.setFromX(0); shake.setByX(10);
+                        shake.setAutoReverse(true); shake.setCycleCount(6);
+                        shake.play();
+                    }
+
+                    // icon: scale up with overshoot, optional rock for lucky
+                    ScaleTransition iconSc = new ScaleTransition(Duration.millis(290), icon);
+                    iconSc.setFromX(0.2); iconSc.setFromY(0.2);
+                    iconSc.setToX(1.22);  iconSc.setToY(1.22);
+                    iconSc.setInterpolator(Interpolator.EASE_OUT);
+                    ParallelTransition iconIn;
+                    if (lucky) {
+                        RotateTransition rock = new RotateTransition(Duration.millis(290), icon);
+                        rock.setFromAngle(-18); rock.setToAngle(18);
+                        rock.setAutoReverse(true); rock.setCycleCount(2);
+                        iconIn = new ParallelTransition(iconSc, buildFade(icon, 0, 1, 200), rock);
+                    } else {
+                        iconIn = new ParallelTransition(iconSc, buildFade(icon, 0, 1, 200));
+                    }
+                    iconIn.setOnFinished(e -> {
+                        ScaleTransition settle = new ScaleTransition(Duration.millis(120), icon);
+                        settle.setToX(1.0); settle.setToY(1.0); settle.play();
+                    });
+                    iconIn.play();
+
+                    // name → description → badge → button (130 ms apart)
+                    PauseTransition p1 = new PauseTransition(Duration.millis(160));
+                    p1.setOnFinished(e -> {
+                        new ParallelTransition(
+                            buildFade(nameLabel, 0, 1, 210),
+                            buildSlideY(nameLabel, 16, 0, 210)
+                        ).play();
+                        PauseTransition p2 = new PauseTransition(Duration.millis(180));
+                        p2.setOnFinished(e2 -> {
+                            buildFade(effectLabel, 0, 1, 210).play();
+                            PauseTransition p3 = new PauseTransition(Duration.millis(180));
+                            p3.setOnFinished(e3 -> {
+                                ScaleTransition lp = new ScaleTransition(Duration.millis(200), luckyLabel);
+                                lp.setFromX(0); lp.setFromY(0);
+                                lp.setToX(1.18); lp.setToY(1.18);
+                                lp.setInterpolator(Interpolator.EASE_OUT);
+                                ParallelTransition badge = new ParallelTransition(lp, buildFade(luckyLabel, 0, 1, 160));
+                                badge.setOnFinished(e4 -> {
+                                    ScaleTransition ls = new ScaleTransition(Duration.millis(100), luckyLabel);
+                                    ls.setToX(1.0); ls.setToY(1.0); ls.play();
+                                    buildFade(continueBtn, 0, 1, 190).play();
+                                });
+                                badge.play();
+                            });
+                            p3.play();
+                        });
+                        p2.play();
+                    });
+                    p1.play();
+                });
+                flip2.play();
+            });
+            flip1.play();
+        });
+        dealIn.play();
     }
 
 
@@ -1602,7 +1718,6 @@ card.getChildren().add(teamBox);
     }
 
 
-    // ← UPDATED: uses tracked index fields instead of pixel-based lookup
     private void animateTokenToCell(ImageView token, int targetIndex, Runnable onFinished) {
         int currentIndex = (token == playerToken) ? playerTokenIndex : opponentTokenIndex;
 
@@ -1754,8 +1869,6 @@ private void showShieldBrokenPopup(String monsterName) {
     );
     slideUp.play();
 }
-// Add this method anywhere in Main.java (e.g. after showTeamSelectScreen)
-
 private void showHowToPlay(Stage stage) {
     Stage popup = new Stage();
     popup.initModality(javafx.stage.Modality.APPLICATION_MODAL);
@@ -1987,6 +2100,73 @@ private void updateTurnGlow(boolean isPlayerTurn) {
         playerGlowTimeline = null;
     }
 }
+    // ── tiny animation helpers ────────────────────────────────────
+    private FadeTransition buildFade(javafx.scene.Node node, double from, double to, double ms) {
+        FadeTransition ft = new FadeTransition(Duration.millis(ms), node);
+        ft.setFromValue(from); ft.setToValue(to);
+        return ft;
+    }
+
+    private TranslateTransition buildSlideY(javafx.scene.Node node, double from, double to, double ms) {
+        TranslateTransition tt = new TranslateTransition(Duration.millis(ms), node);
+        tt.setFromY(from); tt.setToY(to);
+        return tt;
+    }
+
+    // ── cell sound effects (synthesised — no audio files needed) ──
+    private void playCellSound(String type) {
+        if (isMuted) return;
+        new Thread(() -> {
+            try {
+                int    sr = 44100;
+                byte[] buf;
+
+                if (type.equals("door")) {
+                    // play the real door sound on the FX thread
+                    javafx.application.Platform.runLater(() -> {
+                        java.net.URL res = getClass().getResource("/game/audio/OPening_door.mp3");
+                        if (res == null) return;
+                        javafx.scene.media.MediaPlayer sfx =
+                            new javafx.scene.media.MediaPlayer(
+                                new javafx.scene.media.Media(res.toString()));
+                        sfx.setMute(isMuted);
+                        sfx.play();
+                    });
+                    return;
+                } else {
+                    double sF, eF, dur, amp;
+                    switch (type) {
+                        case "sock": sF = 480; eF = 150; dur = 0.55; amp = 0.40; break;
+                        case "belt": sF = 200; eF = 720; dur = 0.40; amp = 0.32; break;
+                        default: return;
+                    }
+                    int n = (int)(sr * dur);
+                    buf = new byte[n * 2];
+                    for (int i = 0; i < n; i++) {
+                        double t   = (double) i / sr;
+                        double freq = sF + (eF - sF) * (t / dur);
+                        double env  = Math.min(1.0, Math.min(t * 18, (dur - t) * 12));
+                        short  sv   = (short)(amp * env * Math.sin(2 * Math.PI * freq * t) * Short.MAX_VALUE);
+                        buf[i * 2]     = (byte)(sv & 0xff);
+                        buf[i * 2 + 1] = (byte)((sv >> 8) & 0xff);
+                    }
+                }
+
+                javax.sound.sampled.AudioFormat fmt =
+                    new javax.sound.sampled.AudioFormat(sr, 16, 1, true, false);
+                javax.sound.sampled.SourceDataLine line =
+                    (javax.sound.sampled.SourceDataLine) javax.sound.sampled.AudioSystem.getLine(
+                        new javax.sound.sampled.DataLine.Info(
+                            javax.sound.sampled.SourceDataLine.class, fmt));
+                line.open(fmt);
+                line.start();
+                line.write(buf, 0, buf.length);
+                line.drain();
+                line.close();
+            } catch (Exception ignored) {}
+        }).start();
+    }
+
     public static void main(String[] args) {
         launch(args);
     }

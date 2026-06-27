@@ -14,7 +14,8 @@ public class Board {
 	private static ArrayList<Card> originalCards;
 	public static ArrayList<Card> cards;
 	private static Card lastCardDrawn;
-	
+	private static String lastCellType = "normal";
+
 	public Board(ArrayList<Card> readCards) {
 		this.boardCells = new Cell[Constants.BOARD_ROWS][Constants.BOARD_COLS];
 		stationedMonsters = new ArrayList<Monster>();
@@ -118,8 +119,10 @@ public class Board {
 		Collections.shuffle(cards);
     }
 	
-	public static Card getLastCardDrawn() { return lastCardDrawn; } //need this in the controller
-	 public static void clearLastCardDrawn() { lastCardDrawn = null; } //same thing 
+	public static Card getLastCardDrawn()    { return lastCardDrawn; }
+	public static void clearLastCardDrawn()  { lastCardDrawn = null; }
+	public static String getLastCellType()   { return lastCellType; }
+	public static void clearLastCellType()   { lastCellType = "normal"; }
 
 	 public static Card drawCard(){
 		 if(cards.isEmpty()){
@@ -137,7 +140,12 @@ public class Board {
 	    
 	    currentMonster.move(roll);
 
-	    getCell(currentMonster.getPosition()).onLand(currentMonster, opponentMonster);
+	    Cell landed = getCell(currentMonster.getPosition());
+	    if      (landed instanceof ContaminationSock) lastCellType = "sock";
+	    else if (landed instanceof ConveyorBelt)      lastCellType = "belt";
+	    else if (landed instanceof DoorCell)          lastCellType = "door";
+	    else                                          lastCellType = "normal";
+	    landed.onLand(currentMonster, opponentMonster);
 
 	    if (currentMonster.getPosition() == opponentMonster.getPosition()) {
 	        currentMonster.setPosition(oldPosition);

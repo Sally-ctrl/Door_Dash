@@ -28,8 +28,8 @@ import javafx.scene.layout.*;
 import javafx.scene.text.*;
 import javafx.stage.*;
 import javafx.beans.binding.*;
-
-
+import javafx.animation.*;
+import javafx.util.Duration;
 
 
 
@@ -41,10 +41,6 @@ public class GameController {
     private ImageView diceImageView;
 
 
-    /*public GameController (Game game ,Main mainView){
-        this.game = game;
-        this.mainView = mainView;
-    }*/
     public GameController(Main mainView) {
         this.mainView = mainView;
     }
@@ -209,22 +205,20 @@ public class GameController {
 
 public void drawLadder(Pane overlay, GridPane board, int fromIndex, int toIndex) {
     javafx.scene.Node fromNode = getNodeFromGrid(board, fromIndex);
-    javafx.scene.Node toNode = getNodeFromGrid(board, toIndex);
-
+    javafx.scene.Node toNode   = getNodeFromGrid(board, toIndex);
     if (fromNode == null || toNode == null) return;
 
-    Bounds fromBounds = fromNode.localToScene(fromNode.getBoundsInLocal());
-    Bounds toBounds = toNode.localToScene(toNode.getBoundsInLocal());
+    Bounds fromBounds    = fromNode.localToScene(fromNode.getBoundsInLocal());
+    Bounds toBounds      = toNode.localToScene(toNode.getBoundsInLocal());
     Bounds overlayBounds = overlay.localToScene(overlay.getBoundsInLocal());
 
     double fromX = (fromBounds.getMinX() + fromBounds.getMaxX()) / 2 - overlayBounds.getMinX();
     double fromY = (fromBounds.getMinY() + fromBounds.getMaxY()) / 2 - overlayBounds.getMinY();
-    double toX = (toBounds.getMinX() + toBounds.getMaxX()) / 2 - overlayBounds.getMinX();
-    double toY = (toBounds.getMinY() + toBounds.getMaxY()) / 2 - overlayBounds.getMinY();
+    double toX   = (toBounds.getMinX()   + toBounds.getMaxX())   / 2 - overlayBounds.getMinX();
+    double toY   = (toBounds.getMinY()   + toBounds.getMaxY())   / 2 - overlayBounds.getMinY();
 
-    double angle = Math.atan2(toY - fromY, toX - fromX);
-    double distance = Math.sqrt(Math.pow(toX - fromX, 2) + Math.pow(toY - fromY, 2));
-
+    double angle       = Math.atan2(toY - fromY, toX - fromX);
+    double distance    = Math.hypot(toX - fromX, toY - fromY);
     double ladderWidth = 12;
     double rungSpacing = 15;
 
@@ -232,97 +226,143 @@ public void drawLadder(Pane overlay, GridPane board, int fromIndex, int toIndex)
     double perpY = Math.sin(angle + Math.PI / 2) * ladderWidth;
 
     javafx.scene.shape.Line leftRail = new javafx.scene.shape.Line(
-        fromX - perpX, fromY - perpY,
-        toX - perpX, toY - perpY
+        fromX - perpX, fromY - perpY, toX - perpX, toY - perpY
     );
     leftRail.setStroke(javafx.scene.paint.Color.web("#8B4513"));
     leftRail.setStrokeWidth(3);
+    leftRail.getStrokeDashArray().setAll(distance);
+    leftRail.setStrokeDashOffset(distance);
 
     javafx.scene.shape.Line rightRail = new javafx.scene.shape.Line(
-        fromX + perpX, fromY + perpY,
-        toX + perpX, toY + perpY
+        fromX + perpX, fromY + perpY, toX + perpX, toY + perpY
     );
     rightRail.setStroke(javafx.scene.paint.Color.web("#8B4513"));
     rightRail.setStrokeWidth(3);
+    rightRail.getStrokeDashArray().setAll(distance);
+    rightRail.setStrokeDashOffset(distance);
 
     overlay.getChildren().addAll(leftRail, rightRail);
 
+    java.util.List<javafx.scene.shape.Line> rungs = new java.util.ArrayList<>();
     int numRungs = (int) (distance / rungSpacing);
     for (int r = 1; r < numRungs; r++) {
-        double t = (double) r / numRungs;
-        double rungCenterX = fromX + t * (toX - fromX);
-        double rungCenterY = fromY + t * (toY - fromY);
-
+        double t  = (double) r / numRungs;
+        double cx = fromX + t * (toX - fromX);
+        double cy = fromY + t * (toY - fromY);
         javafx.scene.shape.Line rung = new javafx.scene.shape.Line(
-            rungCenterX - perpX, rungCenterY - perpY,
-            rungCenterX + perpX, rungCenterY + perpY
+            cx - perpX, cy - perpY, cx + perpX, cy + perpY
         );
         rung.setStroke(javafx.scene.paint.Color.web("#A0522D"));
         rung.setStrokeWidth(2);
+        rung.setOpacity(0);
         overlay.getChildren().add(rung);
+        rungs.add(rung);
     }
+
+    // Animate rails drawing in, then cascade-fade the rungs
+    Timeline railAnim = new Timeline(new KeyFrame(Duration.millis(350),
+        new KeyValue(leftRail.strokeDashOffsetProperty(),  0, Interpolator.EASE_OUT),
+        new KeyValue(rightRail.strokeDashOffsetProperty(), 0, Interpolator.EASE_OUT)
+    ));
+    railAnim.setOnFinished(e -> {
+        for (int r = 0; r < rungs.size(); r++) {
+            final javafx.scene.shape.Line rung = rungs.get(r);
+            PauseTransition delay = new PauseTransition(Duration.millis(r * 18));
+            delay.setOnFinished(ev -> {
+                FadeTransition ft = new FadeTransition(Duration.millis(100), rung);
+                ft.setFromValue(0);
+                ft.setToValue(1);
+                ft.play();
+            });
+            delay.play();
+        }
+    });
+    railAnim.play();
 }
 
 public void drawDoorLine(Pane overlay, GridPane board, int fromIndex, int toIndex) {
     javafx.scene.Node fromNode = getNodeFromGrid(board, fromIndex);
-    javafx.scene.Node toNode = getNodeFromGrid(board, toIndex);
-
+    javafx.scene.Node toNode   = getNodeFromGrid(board, toIndex);
     if (fromNode == null || toNode == null) return;
 
-    Bounds fromBounds = fromNode.localToScene(fromNode.getBoundsInLocal());
-    Bounds toBounds = toNode.localToScene(toNode.getBoundsInLocal());
+    Bounds fromBounds    = fromNode.localToScene(fromNode.getBoundsInLocal());
+    Bounds toBounds      = toNode.localToScene(toNode.getBoundsInLocal());
     Bounds overlayBounds = overlay.localToScene(overlay.getBoundsInLocal());
 
     double fromX = (fromBounds.getMinX() + fromBounds.getMaxX()) / 2 - overlayBounds.getMinX();
     double fromY = (fromBounds.getMinY() + fromBounds.getMaxY()) / 2 - overlayBounds.getMinY();
-    double toX = (toBounds.getMinX() + toBounds.getMaxX()) / 2 - overlayBounds.getMinX();
-    double toY = (toBounds.getMinY() + toBounds.getMaxY()) / 2 - overlayBounds.getMinY();
+    double toX   = (toBounds.getMinX()   + toBounds.getMaxX())   / 2 - overlayBounds.getMinX();
+    double toY   = (toBounds.getMinY()   + toBounds.getMaxY())   / 2 - overlayBounds.getMinY();
 
-    double distance = Math.sqrt(Math.pow(toX - fromX, 2) + Math.pow(toY - fromY, 2));
+    double distance = Math.hypot(toX - fromX, toY - fromY);
 
-    javafx.scene.shape.Line rail2 = new javafx.scene.shape.Line(fromX, fromY + 6, toX, toY + 6);
-    rail2.setStroke(javafx.scene.paint.Color.web("#333333"));
-    rail2.setStrokeWidth(3);
-    rail2.setOpacity(0.9);
-    overlay.getChildren().add(rail2);
-
-    double gap = 30;
-    int numDoors = (int)(distance / gap);
-    double stringLength = 6;
-    double doorWidth = 14;
-    double doorHeight = 20;
+    javafx.scene.shape.Line rail = new javafx.scene.shape.Line(fromX, fromY + 6, toX, toY + 6);
+    rail.setStroke(javafx.scene.paint.Color.web("#333333"));
+    rail.setStrokeWidth(3);
+    rail.setOpacity(0.9);
+    rail.getStrokeDashArray().setAll(distance);
+    rail.setStrokeDashOffset(distance);
+    overlay.getChildren().add(rail);
 
     String[] doorImages = {
         "/game/images/doorhanging.jpeg",
         "/game/images/doorhanging2.png",
         "/game/images/doorhanging3.png"
     };
-    Random random = new Random();
+    Random random      = new Random();
+    double gap         = 30;
+    int    numDoors    = (int) (distance / gap);
+    double stringLen   = 6;
+    double doorWidth   = 14;
+    double doorHeight  = 20;
+
+    java.util.List<javafx.scene.Node> hangItems = new java.util.ArrayList<>();
     for (int d = 0; d <= numDoors; d++) {
-        double t = (double) d / numDoors;
+        double t     = (double) d / numDoors;
         double hangX = fromX + t * (toX - fromX);
         double hangY = fromY + t * (toY - fromY);
 
-        String randomPath = doorImages[random.nextInt(doorImages.length)];
-        Image doorImage = new Image(getClass().getResourceAsStream(randomPath));
-
         javafx.scene.shape.Line string = new javafx.scene.shape.Line(
-            hangX, hangY + 6,
-            hangX, hangY + 6 + stringLength
+            hangX, hangY + 6, hangX, hangY + 6 + stringLen
         );
         string.setStroke(javafx.scene.paint.Color.web("#888888"));
         string.setStrokeWidth(1);
+        string.setOpacity(0);
 
-        ImageView doorView = new ImageView(doorImage);
+        ImageView doorView = new ImageView(
+            new Image(getClass().getResourceAsStream(doorImages[random.nextInt(doorImages.length)]))
+        );
         doorView.setFitWidth(doorWidth);
         doorView.setFitHeight(doorHeight);
         doorView.setPreserveRatio(false);
         doorView.setX(hangX - doorWidth / 2);
-        doorView.setY(hangY + 6 + stringLength);
-        doorView.setOpacity(0.9);
+        doorView.setY(hangY + 6 + stringLen);
+        doorView.setOpacity(0);
 
         overlay.getChildren().addAll(string, doorView);
+        hangItems.add(string);
+        hangItems.add(doorView);
     }
+
+    // Animate rail drawing in, then cascade-reveal the hanging doors
+    Timeline railAnim = new Timeline(new KeyFrame(Duration.millis(350),
+        new KeyValue(rail.strokeDashOffsetProperty(), 0, Interpolator.EASE_OUT)
+    ));
+    railAnim.setOnFinished(e -> {
+        for (int i = 0; i < hangItems.size(); i++) {
+            final javafx.scene.Node item   = hangItems.get(i);
+            final double            target = (item instanceof ImageView) ? 0.9 : 1.0;
+            PauseTransition delay = new PauseTransition(Duration.millis(i * 28));
+            delay.setOnFinished(ev -> {
+                FadeTransition ft = new FadeTransition(Duration.millis(140), item);
+                ft.setFromValue(0);
+                ft.setToValue(target);
+                ft.play();
+            });
+            delay.play();
+        }
+    });
+    railAnim.play();
 }
 
 
@@ -348,45 +388,15 @@ public int[] indexToRowColPublic(int index) {
     public Monster getOpponent() {
         return game.getOpponent();
     }
-    // plays one full turn (rolls dice + moves)
-public void playTurn() throws Exception {
-    game.playTurn();
-}
+    public void playTurn() throws Exception { game.playTurn(); }
 
+    public void usePowerup() throws Exception { game.usePowerup(); }
 
-// activates powerup for current monster
-public void usePowerup() throws Exception {
-    game.usePowerup();
-}
+    public Monster getCurrentMonster() { return game.getCurrent(); }
 
+    public Monster getWinner() { return game.getWinner(); }
 
-// gets current monster playing
-public Monster getCurrentMonster() {
-    return game.getCurrent();
-}
-
-
-// checks if someone won
-public Monster getWinner() {
-    return game.getWinner();
-}
-
-
-// gets last dice roll (we need to add this to Game.java too)
-public int getLastRoll() {
-    return game.getLastRoll();
-}
-// ============================================================
-//  Add these to GameController.java
-// ============================================================
-
-
-// ---------- New fields (add near top with other fields) ----------
-
-
-
-
-// ---------- New setters ----------
+    public int getLastRoll() { return game.getLastRoll(); }
 public void setCurrentMonsterLabel(Label label) {
     this.currentMonsterLabel = label;
 }
@@ -395,12 +405,9 @@ public void setCurrentMonsterLabel(Label label) {
 public void setDiceImageView(ImageView imageView) {
     this.diceImageView = imageView;
 }
-public Card getLastCardDrawn() {
-    return Board.getLastCardDrawn();
-}
-
-
+public Card getLastCardDrawn()   { return Board.getLastCardDrawn(); }
 public void clearLastCardDrawn() { Board.clearLastCardDrawn(); }
+public String getLastCellType()  { return Board.getLastCellType(); }
 public int getPlayerPosition()   { return game.getPlayer().getPosition(); }
 public int getOpponentPosition() { return game.getOpponent().getPosition(); }
 public int getPlayerEnergy()     { return game.getPlayer().getEnergy(); }
